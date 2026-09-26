@@ -2,6 +2,20 @@ import { addDays, toKst } from '../lib/kst';
 import type { ProxyRoute } from '../lib/types';
 
 const ENDPOINT = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+const PAGE_SIZE = 1000;
+
+interface KmaEnvelope {
+  response: {
+    header: unknown;
+    body: { items?: { item?: unknown[] | unknown }; totalCount?: number; numOfRows?: number; pageNo?: number; [k: string]: unknown };
+  };
+}
+
+const itemsOf = (json: unknown): unknown[] => {
+  const item = (json as KmaEnvelope)?.response?.body?.items?.item;
+  if (!item) return [];
+  return Array.isArray(item) ? item : [item];
+};
 const BASE_HOURS = [2, 5, 8, 11, 14, 17, 20, 23];
 const AVAILABLE_AFTER_MINUTES = 10;
 
@@ -56,7 +70,7 @@ export const kmaVilageFcstRoute: ProxyRoute = {
       const params = new URLSearchParams({
         serviceKey,
         pageNo: '1',
-        numOfRows: '1000',
+        numOfRows: String(PAGE_SIZE),
         dataType: 'JSON',
         base_date: baseDate,
         base_time: baseTime,
@@ -78,6 +92,29 @@ export const kmaVilageFcstRoute: ProxyRoute = {
     '03': 'NO_DATA',
     '22': 'LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS (일일 한도 초과)',
     '30': 'SERVICE_KEY_IS_NOT_REGISTERED (미등록 키)',
+  },
+
+  // 발표시각에 따라 1000건을 넘을 수 있어(글피까지 1시간 단위) 나머지 페이지도 받아 합친다
+  pagination: {
+    pageSize: PAGE_SIZE,
+    maxPages: 3,
+    totalCount: (json) => Number((json as KmaEnvelope)?.response?.body?.totalCount ?? 0),
+    pageUrl(url, pageNo) {
+      const u = new URL(url);
+      u.searchParams.set('pageNo', String(pageNo));
+      return u.toString();
+    },
+    merge(pages) {
+      const first = pages[0] as KmaEnvelope;
+      const item = pages.flatMap(itemsOf);
+      return {
+        ...first,
+        response: {
+          ...first.response,
+          body: { ...first.response.body, items: { item }, numOfRows: item.length, pageNo: 1 },
+        },
+      };
+    },
   },
 
   // 단기예보는 글피까지 오므로 최대 3일간 "마지막 정상 응답"으로 쓸 만하다

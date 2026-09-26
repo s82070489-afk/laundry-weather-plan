@@ -34,7 +34,7 @@ KMA_SERVICE_KEY=<Decoding 인증키> npm run check:api
 npm run check:api -- "서울 마포 서교" "광주 동구 충장"
 ```
 
-지역마다 발표시각, 받은 시각 수, `totalCount`, 오늘·내일 3종 판정을 출력해요. `totalCount`가 1000을 넘으면 경고가 나와요(`numOfRows=1000`이라 뒤쪽 시각이 잘릴 수 있음).
+지역마다 발표시각, 받은 시각 수, `totalCount`, 오늘·내일 3종 판정을 출력해요. `totalCount`가 1000을 넘으면 Worker(와 직접 호출 모드)가 다음 페이지까지 받아 합치고, 받은 건수가 `totalCount`보다 적으면 실패로 표시해요.
 
 ## 폴더 구조
 

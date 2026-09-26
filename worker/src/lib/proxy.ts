@@ -71,10 +71,42 @@ async function writeCache(env: Env, key: string, entry: CachedEntry, ttl: number
   }
 }
 
+type PageResult = { ok: true; json: unknown; text: string } | { ok: false; code: string };
+
+async function fetchPage(route: ProxyRoute, url: string, version: string, fetchFn: typeof fetch): Promise<PageResult> {
+  try {
+    const res = await fetchFn(url, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
+    if (!res.ok) {
+      console.warn(`[upstream] ${route.path} v=${version} HTTP ${res.status}`);
+      return { ok: false, code: `HTTP_${res.status}` };
+    }
+    const text = await res.text();
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      // 공공데이터포털은 인증 오류 등을 XML로 줄 때가 있다
+      console.warn(`[upstream] ${route.path} v=${version} non-JSON: ${text.slice(0, 200)}`);
+      return { ok: false, code: 'NON_JSON' };
+    }
+    const check = route.check(json);
+    if (!check.ok) {
+      const label = route.errorLabels?.[check.code] ?? check.message;
+      console.warn(`[upstream] ${route.path} v=${version} resultCode=${check.code} ${label}`);
+      return { ok: false, code: check.code };
+    }
+    return { ok: true, json, text };
+  } catch (e) {
+    console.warn(`[upstream] ${route.path} v=${version} fetch failed`, e);
+    return { ok: false, code: 'FETCH_FAILED' };
+  }
+}
+
 /**
  * 공통 프록시 흐름:
  *   1) 캐시에 현재 최신 버전이 있으면 그대로 (HIT) — 업스트림 호출 없음
  *   2) 없으면 후보 버전을 최신순으로 호출, 처음 성공한 응답을 저장하고 반환 (MISS)
+ *      페이지가 나뉘는 API는 전체 페이지를 받아 합친 뒤 저장
  *   3) 전부 실패하면 캐시의 마지막 정상 응답을 반환 (STALE), 그것도 없으면 502
  */
 export async function handleRoute(
@@ -107,36 +139,39 @@ export async function handleRoute(
   for (const candidate of candidates) {
     // 이미 가진 버전 이하를 다시 받아올 필요는 없다
     if (cached && cached.version >= candidate.version) break;
-    try {
-      const res = await fetchFn(candidate.url, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
-      if (!res.ok) {
-        lastCode = `HTTP_${res.status}`;
-        console.warn(`[upstream] ${route.path} v=${candidate.version} HTTP ${res.status}`);
-        continue;
-      }
-      const text = await res.text();
-      let json: unknown;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        // 공공데이터포털은 인증 오류 등을 XML로 줄 때가 있다
-        lastCode = 'NON_JSON';
-        console.warn(`[upstream] ${route.path} v=${candidate.version} non-JSON: ${text.slice(0, 200)}`);
-        continue;
-      }
-      const check = route.check(json);
-      if (!check.ok) {
-        lastCode = check.code;
-        const label = route.errorLabels?.[check.code] ?? check.message;
-        console.warn(`[upstream] ${route.path} v=${candidate.version} resultCode=${check.code} ${label}`);
-        continue;
-      }
-      await writeCache(env, key, { version: candidate.version, savedAt: now.getTime(), body: text }, route.retentionSeconds);
-      return { status: 200, body: text, cache: 'MISS', version: candidate.version };
-    } catch (e) {
-      lastCode = 'FETCH_FAILED';
-      console.warn(`[upstream] ${route.path} v=${candidate.version} fetch failed`, e);
+    const first = await fetchPage(route, candidate.url, candidate.version, fetchFn);
+    if (!first.ok) {
+      lastCode = first.code;
+      continue;
     }
+
+    let body = first.text;
+    const pagination = route.pagination;
+    if (pagination) {
+      const total = pagination.totalCount(first.json);
+      const pageCount = Math.min(Math.ceil(total / pagination.pageSize), pagination.maxPages);
+      if (pageCount > 1) {
+        const pages: unknown[] = [first.json];
+        let failed: string | null = null;
+        for (let pageNo = 2; pageNo <= pageCount; pageNo++) {
+          const page = await fetchPage(route, pagination.pageUrl(candidate.url, pageNo), candidate.version, fetchFn);
+          if (!page.ok) {
+            failed = page.code;
+            break;
+          }
+          pages.push(page.json);
+        }
+        // 일부 페이지만 받은 응답은 저장하지 않는다 (잘린 예보가 다음 발표까지 HIT되는 걸 막음)
+        if (failed) {
+          lastCode = failed;
+          continue;
+        }
+        body = JSON.stringify(pagination.merge(pages));
+      }
+    }
+
+    await writeCache(env, key, { version: candidate.version, savedAt: now.getTime(), body }, route.retentionSeconds);
+    return { status: 200, body, cache: 'MISS', version: candidate.version };
   }
 
   if (cached) {

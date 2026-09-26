@@ -11,10 +11,10 @@
 
 - **v1.0은 기상청 단기예보만 사용, 미세먼지(에어코리아)는 v1.1.** 판정 근거 화면에 에어코리아 확인 안내 문구 노출. 감점 규칙은 `src/scoring/rules.ts`에 규칙 하나 추가하는 구조
 - **서비스키는 클라이언트에 두지 않음**: 앱 → Worker(`/kma/vilage-fcst?nx=&ny=`) → 기상청. 키는 Worker 비밀값 `KMA_SERVICE_KEY`. (배출일 앱은 `VITE_` env로 키가 번들에 들어가는 구조였음)
-- **캐싱**: 격자+발표시각 단위. Worker는 isolate 메모리 + KV(마지막 정상 응답 3일 보관, 실패 시 STALE로 반환), 앱은 localStorage. Cache API는 `workers.dev`에서 안 돼서 KV 사용
+- **캐싱**: 격자+발표시각 단위. Worker는 isolate 메모리 + KV(마지막 정상 응답 3일 보관, 실패 시 STALE로 반환), 앱은 localStorage. Cache API는 `workers.dev`에서 안 돼서 KV 사용. `totalCount`가 1000을 넘으면 Worker가 다음 페이지까지 받아 합치고, 일부 페이지만 받은 응답은 저장하지 않음
 - **CORS**: `worker/src/config/allowedOrigins.ts`. SDK 3.x 호스트 `{appName}.web.tossmini.com`/`private-web`, 2.x 호스트 `apps`/`private-apps` 네 가지 허용. 로컬 Origin은 `ALLOW_DEV_ORIGINS="true"`일 때만
 - **appName 미정** (후보 `laundry-today`): `laundry-today/src/config/appName.ts` 한 곳 + Worker `allowedOrigins.ts`
-- **판정 수치**는 `laundry-today/src/config/scoring.ts`에만. 하늘 감점 구름많음 -5 / 흐림 -10
+- **판정 수치**는 `laundry-today/src/config/scoring.ts`에만. 하늘 감점 구름많음 -5 / 흐림 -10, 습도 70%+ -20 / 85%+ -45
 - **판정 규칙**: 시각별 100점 감점, PTY≠0 시각 0점. 빨래 = 09~18시 남은 시각의 연속 3h+ 구간 최고 평균, 비 예보 시각이 낀 구간은 제외. 추천 시간대 = 최고 평균 -5점 이내 중 가장 긴 구간. 이불 = 습도 1.5배, 4h+. 세차 = 판정일~2일 뒤 PTY≠0 또는 POP≥60 있으면 비추천(0점). 18시 이후 홈은 내일 기준
 - **디자인**: TDS 미사용, 배출일 앱 토큰(블루 단일 액센트, 화이트 카드 + 1px 보더). 판정 배지: 좋아요=블루, 괜찮아요=연블루, 아쉬워요·비추천=그레이
 - **뒤로가기 버튼을 직접 그리지 않음** (배출일 앱 심사 반려 사례). `graniteEvent backEvent` + `Screen.close()` + history 동기화

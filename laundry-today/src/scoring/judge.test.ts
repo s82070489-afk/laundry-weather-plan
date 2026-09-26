@@ -48,7 +48,7 @@ describe('scoreHour', () => {
     expect(scoreHour(h(TODAY, 12, { pop: 30 })).score).toBe(70);
     expect(scoreHour(h(TODAY, 12, { pop: 50 })).score).toBe(50);
     expect(scoreHour(h(TODAY, 12, { reh: 70 })).score).toBe(80);
-    expect(scoreHour(h(TODAY, 12, { reh: 85 })).score).toBe(65);
+    expect(scoreHour(h(TODAY, 12, { reh: 85 })).score).toBe(55);
     expect(scoreHour(h(TODAY, 12, { tmp: 9.9 })).score).toBe(85);
     expect(scoreHour(h(TODAY, 12, { tmp: 4 })).score).toBe(75);
     expect(scoreHour(h(TODAY, 12, { wsd: 0.9 })).score).toBe(90);
@@ -64,11 +64,15 @@ describe('scoreHour', () => {
 
   it('이불은 습도 감점 1.5배', () => {
     const s = scoreHour(h(TODAY, 12, { reh: 85 }), SCORING.activities.blanket.multipliers);
-    expect(s.score).toBe(100 - 35 * 1.5);
+    expect(s.score).toBe(100 - 45 * 1.5);
   });
 });
 
 describe('실제 응답 패턴', () => {
+  it('습도 85% 이상이면 맑고 바람이 적당해도 "아쉬워요" 이하', () => {
+    expect(scoreHour(h(TODAY, 7, { reh: 85, pop: 20, sky: 1, wsd: 2 })).score).toBeLessThan(SCORING.verdictThresholds.okay);
+  });
+
   it('06~08시 습도 85~90%, 강수확률 20~30% → 시각별 "아쉬워요" 이하', () => {
     const day = realisticDay(TODAY);
     for (const hour of [6, 7, 8]) {

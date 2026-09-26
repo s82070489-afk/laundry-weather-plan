@@ -17,7 +17,7 @@ export const SCORING = {
     ],
     /** 습도(%) */
     reh: [
-      { atLeast: 85, points: 35 },
+      { atLeast: 85, points: 45 },
       { atLeast: 70, points: 20 },
     ],
     /** 기온(°C) — below 미만이면 감점 */

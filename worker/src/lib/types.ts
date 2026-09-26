@@ -33,6 +33,21 @@ export interface ProxyRoute {
   errorLabels?: Record<string, string>;
   /** "마지막 정상 응답" 보관 기간(초). KV 만료. */
   retentionSeconds: number;
+  /** 한 페이지에 다 안 오는 API면 나머지 페이지까지 받아 하나로 합친다 */
+  pagination?: RoutePagination;
+}
+
+export interface RoutePagination {
+  /** 한 페이지 크기 (요청 URL의 numOfRows와 같게) */
+  pageSize: number;
+  /** 최대 페이지 수 (한도 보호) */
+  maxPages: number;
+  /** 첫 페이지 응답에서 전체 건수 */
+  totalCount(json: unknown): number;
+  /** 같은 요청의 n번째 페이지 URL */
+  pageUrl(url: string, pageNo: number): string;
+  /** 페이지 응답들(순서대로)을 하나의 응답으로 */
+  merge(pages: unknown[]): unknown;
 }
 
 export interface CachedEntry {

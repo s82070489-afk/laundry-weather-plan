@@ -28,6 +28,10 @@ if (!proxyUrl && !serviceKey) {
   process.exit(1);
 }
 
+interface KmaJson {
+  response?: { header?: { resultCode?: string }; body?: { totalCount?: number; items?: { item?: unknown[] } } };
+}
+
 async function fetchRaw(nx: number, ny: number): Promise<{ json: unknown; via: string }> {
   if (proxyUrl) {
     const res = await fetch(`${proxyUrl}/kma/vilage-fcst?nx=${nx}&ny=${ny}`, { headers: { Origin: DEV_ORIGIN } });
@@ -35,23 +39,33 @@ async function fetchRaw(nx: number, ny: number): Promise<{ json: unknown; via: s
     return { json: await res.json(), via };
   }
   const { baseDate, baseTime } = getLatestBaseDateTime(new Date());
-  const params = new URLSearchParams({
-    serviceKey: serviceKey!,
-    pageNo: '1',
-    numOfRows: '1000',
-    dataType: 'JSON',
-    base_date: baseDate,
-    base_time: baseTime,
-    nx: String(nx),
-    ny: String(ny),
-  });
-  const res = await fetch(`${KMA_ENDPOINT}?${params.toString()}`);
-  const text = await res.text();
-  try {
-    return { json: JSON.parse(text), via: `direct HTTP ${res.status} base=${baseDate} ${baseTime}` };
-  } catch {
-    throw new Error(`JSON이 아닌 응답 (인증키 오류일 가능성): ${text.slice(0, 200)}`);
+  // Worker와 같게: totalCount가 1000을 넘으면 다음 페이지까지 받아 합친다
+  const pages: KmaJson[] = [];
+  for (let pageNo = 1; pageNo <= 3; pageNo++) {
+    const params = new URLSearchParams({
+      serviceKey: serviceKey!,
+      pageNo: String(pageNo),
+      numOfRows: '1000',
+      dataType: 'JSON',
+      base_date: baseDate,
+      base_time: baseTime,
+      nx: String(nx),
+      ny: String(ny),
+    });
+    const res = await fetch(`${KMA_ENDPOINT}?${params.toString()}`);
+    const text = await res.text();
+    try {
+      pages.push(JSON.parse(text) as KmaJson);
+    } catch {
+      throw new Error(`JSON이 아닌 응답 (인증키 오류일 가능성): ${text.slice(0, 200)}`);
+    }
+    const total = pages[0]?.response?.body?.totalCount ?? 0;
+    if (pages[0]?.response?.header?.resultCode !== '00' || pageNo * 1000 >= total) break;
   }
+  const [first, ...rest] = pages;
+  const extra = rest.flatMap((p) => p.response?.body?.items?.item ?? []);
+  if (extra.length && first.response?.body?.items?.item) first.response.body.items.item.push(...extra);
+  return { json: first, via: `direct base=${baseDate} ${baseTime} pages=${pages.length}` };
 }
 
 const queries = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_QUERIES;
@@ -74,9 +88,11 @@ for (const query of queries) {
     const { json, via } = await fetchRaw(region.nx, region.ny);
     const totalCount = (json as { response?: { body?: { totalCount?: number } } })?.response?.body?.totalCount;
     const data = parseForecast(json, region.nx, region.ny);
+    const received = ((json as KmaJson)?.response?.body?.items?.item ?? []).length;
+    if (totalCount && received < totalCount) throw new Error(`항목 ${received}/${totalCount}건만 받음 — 페이지 합치기 실패`);
     const dates = [...new Set(data.hours.map((h) => h.date))];
     console.log(`✓ ${region.label} (nx=${region.nx}, ny=${region.ny}) — ${via}`);
-    console.log(`  발표 ${data.baseDate} ${data.baseTime}, 시각 ${data.hours.length}개 (${dates[0]}~${dates.at(-1)}), totalCount=${totalCount ?? '?'}${totalCount && totalCount > 1000 ? ' ⚠️ 1000건 초과 — 뒤쪽 시각이 잘렸을 수 있음' : ''}`);
+    console.log(`  발표 ${data.baseDate} ${data.baseTime}, 시각 ${data.hours.length}개 (${dates[0]}~${dates.at(-1)}), totalCount=${totalCount ?? '?'}${totalCount && totalCount > 1000 ? ' (1000건 초과 → 여러 페이지 합침)' : ''}`);
     for (const date of [mainDate, addDays(mainDate, 1)]) {
       const line = activities
         .map((a) => {

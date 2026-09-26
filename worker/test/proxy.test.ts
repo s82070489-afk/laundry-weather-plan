@@ -142,6 +142,47 @@ describe('handleRoute (kma vilage-fcst)', () => {
     expect(new URL(url).searchParams.get('serviceKey')).toBe('abc+def==');
   });
 
+  it('totalCount가 1000을 넘으면 다음 페이지까지 받아 합친다', async () => {
+    const { kv } = fakeKv();
+    const page = (pageNo: number, count: number) =>
+      JSON.stringify({
+        response: {
+          header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
+          body: { items: { item: Array.from({ length: count }, (_, i) => ({ p: pageNo, i })) }, totalCount: 1150, numOfRows: 1000, pageNo },
+        },
+      });
+    const fetchFn = vi.fn(async (url: string) => {
+      const pageNo = Number(new URL(url).searchParams.get('pageNo'));
+      return new Response(pageNo === 1 ? page(1, 1000) : page(2, 150));
+    });
+    const r = await handleRoute(kmaVilageFcstRoute, query, envWith(kv), now, fetchFn as unknown as typeof fetch);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    const body = JSON.parse(r.body).response.body;
+    expect(body.items.item).toHaveLength(1150);
+    expect(body.items.item[1149]).toEqual({ p: 2, i: 149 });
+    expect(new URL((fetchFn.mock.calls[1] as unknown as [string])[0]).searchParams.get('base_time')).toBe('1100');
+  });
+
+  it('1000건 이하면 한 번만 부른다', async () => {
+    const { kv } = fakeKv();
+    const fetchFn = vi.fn(async () => new Response(okBody('1100')));
+    await handleRoute(kmaVilageFcstRoute, query, envWith(kv), now, fetchFn as unknown as typeof fetch);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('다음 페이지가 실패하면 잘린 응답을 저장하지 않고 이전 데이터(STALE)를 준다', async () => {
+    const { kv, store } = fakeKv();
+    const env = envWith(kv);
+    await handleRoute(kmaVilageFcstRoute, query, env, kst('2026-09-26T09:00'), (async () => new Response(okBody('0800'))) as unknown as typeof fetch);
+    const big = JSON.stringify({ response: { header: { resultCode: '00' }, body: { items: { item: [{ baseTime: '1100' }] }, totalCount: 1150 } } });
+    const fetchFn = vi.fn(async (url: string) =>
+      new URL(url).searchParams.get('pageNo') === '1' ? new Response(big) : new Response(errBody('22')),
+    );
+    const r = await handleRoute(kmaVilageFcstRoute, query, env, now, fetchFn as unknown as typeof fetch);
+    expect(r.cache).toBe('STALE');
+    expect(JSON.parse(store.get('kma-vilage-fcst:60:127')!).version).toBe('202609260800');
+  });
+
   it('격자 좌표 검증', async () => {
     const { kv } = fakeKv();
     for (const q of ['nx=0&ny=10', 'nx=60', 'nx=abc&ny=1', 'nx=150&ny=1', 'nx=60&ny=254']) {
