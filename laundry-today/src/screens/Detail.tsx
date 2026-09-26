@@ -3,6 +3,7 @@ import VerdictBadge from '../components/VerdictBadge';
 import { SCORING } from '../config/scoring';
 import type { ForecastState } from '../hooks/useForecast';
 import { ACTIVITY_LABEL, formatWindow, judge, type Activity, type HourScore, type Judgement } from '../scoring/judge';
+import { periodOf } from '../scoring/reason';
 import { formatDateLabel, relativeDayLabel } from '../utils/format';
 import { addDays, toKst } from '../weather/kst';
 import type { HourlyForecast } from '../weather/types';
@@ -76,7 +77,7 @@ function statusText(j: Judgement, today: string): string {
   if (j.reason === 'no-data') return '아직 이 날짜의 예보가 없어요';
   if (j.reason === 'too-late') return '오늘은 빨래하기엔 늦었어요. 남은 낮 시간이 부족해요';
   if (j.reason === 'rain-soon' && j.rainAt) {
-    return `${relativeDayLabel(j.rainAt.date, today, addDays)} ${j.rainAt.hour}시에 비 소식이 있어요. 세차는 미뤄두세요`;
+    return `${relativeDayLabel(j.rainAt.date, today, addDays)} ${periodOf(j.rainAt.hour)}에 비 소식이 있어요. 세차는 미뤄두세요`;
   }
   const window = formatWindow(j.window);
   if (j.activity === 'carWash') return j.verdict === 'bad' ? '세차하기 좋은 날씨가 아니에요' : '당분간 비 소식이 없어요';

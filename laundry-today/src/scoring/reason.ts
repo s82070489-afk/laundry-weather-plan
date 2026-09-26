@@ -39,7 +39,9 @@ export function reasonText(j: Judgement, dayLabel: string, config: ScoringConfig
   }
 }
 
-function periodOf(hour: number): string {
+/** 시각 → 새벽/오전/오후/저녁 */
+export function periodOf(hour: number): string {
+  if (hour < 6) return '새벽';
   if (hour < 12) return '오전';
   if (hour < 18) return '오후';
   return '저녁';
@@ -58,4 +60,17 @@ function topPenalty(hours: HourScore[]): string | null {
     }
   }
   return best;
+}
+
+const DAYS_WORD: Record<number, string> = { 1: '하루', 2: '이틀', 3: '사흘' };
+
+/**
+ * 미리보기 줄처럼 좁은 자리에 쓰는 짧은 이유. 지금은 세차 비 소식만 해당.
+ * 판정일 당일 비면 "당일 비 소식", 이후면 "이틀 안에 비 소식" (lookaheadDays 기준).
+ */
+export function shortReason(j: Judgement, config: ScoringConfig = SCORING): string | null {
+  if (j.reason !== 'rain-soon' || !j.rainAt) return null;
+  if (j.rainAt.date === j.date) return '당일 비 소식';
+  const days = config.activities.carWash.lookaheadDays;
+  return `${DAYS_WORD[days] ?? `${days}일`} 안에 비 소식`;
 }

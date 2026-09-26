@@ -13,7 +13,7 @@ import {
   type Activity,
   type Judgement,
 } from '../scoring/judge';
-import { reasonText } from '../scoring/reason';
+import { reasonText, shortReason } from '../scoring/reason';
 import type { SelectedRegion } from '../storage/selectedRegion';
 import { formatDateLabel } from '../utils/format';
 import { addDays, toKst } from '../weather/kst';
@@ -150,9 +150,10 @@ function HomeContent({ hours, stale, now, mainDate, isTomorrow, previewDate, onO
               <button type="button" className="home-preview-row" onClick={() => onOpenDetail(j.activity, previewDate)}>
                 <span>{ACTIVITY_LABEL[j.activity]}</span>
                 <span className="home-preview-right">
-                  {j.activity !== 'carWash' && formatWindow(j.window) && (
-                    <span className="home-preview-window">{formatWindow(j.window)}</span>
-                  )}
+                  {/* 시간대 자리: 빨래·이불은 추천 시간대, 세차는 비추천 이유 */}
+                  {j.activity === 'carWash'
+                    ? shortReason(j) && <span className="home-preview-window">{shortReason(j)}</span>
+                    : formatWindow(j.window) && <span className="home-preview-window">{formatWindow(j.window)}</span>}
                   <VerdictBadge judgement={j} />
                 </span>
               </button>

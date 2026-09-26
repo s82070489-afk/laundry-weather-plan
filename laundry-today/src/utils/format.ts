@@ -19,5 +19,6 @@ export function relativeDayLabel(date: string, today: string, addDays: (d: strin
   if (date === today) return '오늘';
   if (date === addDays(today, 1)) return '내일';
   if (date === addDays(today, 2)) return '모레';
+  if (date === addDays(today, 3)) return '글피';
   return formatDateLabel(date);
 }

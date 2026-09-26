@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { HourlyForecast } from '../weather/types';
 import { judge } from './judge';
-import { reasonText } from './reason';
+import { addDays } from '../weather/kst';
+import { relativeDayLabel } from '../utils/format';
+import { periodOf, reasonText, shortReason } from './reason';
 
 const TODAY = '20260926';
 const TOMORROW = '20260927';
@@ -47,5 +49,32 @@ describe('reasonText', () => {
       '남은 낮 시간이 짧아 널어도 다 마르기 어려워요',
     );
     expect(reasonText(judge('laundry', day(TODAY), TOMORROW, now), '내일')).toBeNull();
+  });
+});
+
+describe('periodOf / relativeDayLabel (세차 상세 문장)', () => {
+  it('시각과 날짜를 말로', () => {
+    expect([0, 5, 6, 11, 12, 17, 18, 23].map(periodOf)).toEqual(['새벽', '새벽', '오전', '오전', '오후', '오후', '저녁', '저녁']);
+    expect(['20260926', '20260927', '20260928', '20260929', '20260930'].map((d) => relativeDayLabel(d, TODAY, addDays))).toEqual([
+      '오늘',
+      '내일',
+      '모레',
+      '글피',
+      '9월 30일 (수)',
+    ]);
+  });
+});
+
+describe('shortReason (세차 미리보기)', () => {
+  const next = '20260928';
+  it('판정일 이후 비면 "이틀 안에 비 소식", 당일 비면 "당일 비 소식"', () => {
+    const later = [...day(TOMORROW), ...day(next, { pty: 1 })];
+    expect(shortReason(judge('carWash', later, TOMORROW, now))).toBe('이틀 안에 비 소식');
+    const sameDay = day(TOMORROW, {}, { 20: { pty: 1 } });
+    expect(shortReason(judge('carWash', sameDay, TOMORROW, now))).toBe('당일 비 소식');
+  });
+  it('비 소식이 없거나 세차가 아니면 없음', () => {
+    expect(shortReason(judge('carWash', day(TOMORROW), TOMORROW, now))).toBeNull();
+    expect(shortReason(judge('laundry', day(TOMORROW, { pty: 1 }), TOMORROW, now))).toBeNull();
   });
 });
