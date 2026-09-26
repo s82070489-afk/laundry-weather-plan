@@ -6,8 +6,11 @@ export const SCORING = {
   /** 판정에 쓰는 낮 시간대: start시 ~ end시 (end 미포함 → 09~17시 슬롯, 18시에 끝) */
   dayHours: { start: 9, end: 18 },
 
-  /** 18시 이후에 열면 홈 메인 판정을 내일 기준으로 */
-  switchToTomorrowHour: 18,
+  /**
+   * 이 시각(KST) 이후에 열면 홈 메인 판정을 내일 기준으로 ("내일 빨래 계획").
+   * 오후 늦게는 남은 낮 시간이 짧아 오늘 판정이 "늦었어요"만 나오기 쉬워서 15시로 당겼다.
+   */
+  switchToTomorrowHour: 15,
 
   penalties: {
     /** 강수확률(%) — 높은 기준부터 검사, 처음 맞는 것 하나만 적용 */

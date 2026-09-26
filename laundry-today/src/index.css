@@ -78,10 +78,15 @@ my-element {
   color: var(--ink);
 }
 
-.verdict-badge.is-bad,
-.verdict-badge.is-unknown {
+.verdict-badge.is-bad {
   background: var(--line);
   color: var(--muted);
+}
+
+.verdict-badge.is-unknown {
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .source-notice {

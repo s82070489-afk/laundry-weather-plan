@@ -13,7 +13,8 @@
 import { getLatestBaseDateTime } from '../src/weather/baseTime';
 import { addDays, toKst } from '../src/weather/kst';
 import { parseForecast } from '../src/weather/parse';
-import { ACTIVITY_LABEL, VERDICT_LABEL, formatWindow, judge, mainTargetDate, type Activity } from '../src/scoring/judge';
+import { SCORING } from '../src/config/scoring';
+import { ACTIVITY_LABEL, formatWindow, judge, mainTargetDate, verdictLabel, type Activity } from '../src/scoring/judge';
 import { searchRegions } from '../src/utils/grid';
 
 const DEFAULT_QUERIES = ['서울 종로구 청운효자동', '부산 해운대구 우1동', '제주 제주시 노형동', '대전 유성구 온천1동', '강원 강릉시 교1동'];
@@ -75,7 +76,7 @@ const { date: mainDate, isTomorrow } = mainTargetDate(now);
 const activities: Activity[] = ['laundry', 'blanket', 'carWash'];
 let failures = 0;
 
-console.log(`기준 시각(KST) ${nowKst.date} ${nowKst.hour}:${String(nowKst.minute).padStart(2, '0')} · 메인 판정일 ${mainDate}${isTomorrow ? ' (18시 이후 → 내일)' : ''}\n`);
+console.log(`기준 시각(KST) ${nowKst.date} ${nowKst.hour}:${String(nowKst.minute).padStart(2, '0')} · 메인 판정일 ${mainDate}${isTomorrow ? ` (${SCORING.switchToTomorrowHour}시 이후 → 내일)` : ''}\n`);
 
 for (const query of queries) {
   const region = searchRegions(query, 1)[0];
@@ -97,7 +98,7 @@ for (const query of queries) {
       const line = activities
         .map((a) => {
           const j = judge(a, data.hours, date, now);
-          const verdict = j.verdict ? VERDICT_LABEL[j.verdict] : '예보없음';
+          const verdict = verdictLabel(j);
           const extra = j.reason === 'rain-soon' && j.rainAt ? ` 비 ${j.rainAt.date.slice(4)} ${j.rainAt.hour}시` : formatWindow(j.window) ? ` ${formatWindow(j.window)}` : '';
           return `${ACTIVITY_LABEL[a]} ${verdict}(${j.score ?? '-'})${extra}`;
         })

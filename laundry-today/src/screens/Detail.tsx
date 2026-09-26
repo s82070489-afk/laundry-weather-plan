@@ -41,7 +41,7 @@ export default function Detail({ activity, date, forecast }: DetailProps) {
 
       <section className="detail-status card">
         <div className="detail-status-top">
-          <VerdictBadge verdict={j.verdict} />
+          <VerdictBadge judgement={j} />
           {j.score !== null && <span className="detail-score">{j.score}점</span>}
         </div>
         <p className="detail-status-text">{statusText(j, nowKst.date)}</p>
@@ -74,7 +74,7 @@ export default function Detail({ activity, date, forecast }: DetailProps) {
 
 function statusText(j: Judgement, today: string): string {
   if (j.reason === 'no-data') return '아직 이 날짜의 예보가 없어요';
-  if (j.reason === 'not-enough-time') return '남은 낮 시간이 부족해서 오늘은 널어 말리기 어려워요';
+  if (j.reason === 'too-late') return '오늘은 빨래하기엔 늦었어요. 남은 낮 시간이 부족해요';
   if (j.reason === 'rain-soon' && j.rainAt) {
     return `${relativeDayLabel(j.rainAt.date, today, addDays)} ${j.rainAt.hour}시에 비 소식이 있어요. 세차는 미뤄두세요`;
   }

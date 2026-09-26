@@ -13,6 +13,10 @@ export const VERDICT_LABEL: Record<Verdict, string> = {
   bad: '비추천',
 };
 
+/** 판정 대신 보여줄 상태 라벨 (verdict가 null인 경우) */
+export const TOO_LATE_LABEL = '늦었어요';
+export const NO_DATA_LABEL = '예보 없음';
+
 export const ACTIVITY_LABEL: Record<Activity, string> = {
   laundry: '빨래',
   blanket: '이불 널기',
@@ -36,8 +40,8 @@ export interface HourScore {
 }
 
 export type JudgeReason =
-  /** 낮 시간대가 거의 지나서 N시간 연속 구간이 없음 */
-  | 'not-enough-time'
+  /** 오늘 남은 낮 시간이 연속 N시간보다 짧음 → 판정 대신 "늦었어요" (verdict null) */
+  | 'too-late'
   /** 세차: 판정일~N일 뒤 사이 비 예보 */
   | 'rain-soon'
   /** 해당 날짜 예보 없음 */
@@ -46,6 +50,7 @@ export type JudgeReason =
 export interface Judgement {
   activity: Activity;
   date: string;
+  /** null이면 판정 불가 — reason이 'too-late'(늦었어요) 또는 'no-data' */
   verdict: Verdict | null;
   score: number | null;
   /** 추천 시간대 [start, end) — end는 "~end시" 표기용 */
@@ -147,11 +152,12 @@ function judgeDrying(
   if (!hasAnyForDate) return { ...base, verdict: null, score: null, window: null, reason: 'no-data' };
 
   const w = bestWindow(hourly, minWindowHours, config.windowTolerance);
-  if (!w) {
-    // 남은 낮 시간 자체가 짧은지, 비 때문에 연속 구간이 없는지 구분한다
-    const reason = hourly.length < minWindowHours ? 'not-enough-time' : undefined;
-    return { ...base, verdict: 'bad', score: 0, window: null, reason };
+  // 남은 낮 시간 자체가 짧으면 "비추천"이 아니라 "늦었어요" — 날씨가 나빠서가 아니다
+  if (hourly.length < minWindowHours) {
+    return { ...base, verdict: null, score: null, window: null, reason: 'too-late' };
   }
+  // 시간은 있는데 비 때문에 연속 구간이 없으면 비추천
+  if (!w) return { ...base, verdict: 'bad', score: 0, window: null };
 
   const score = Math.round(w.best);
   const verdict = toVerdict(score, config);
@@ -201,7 +207,13 @@ export function judge(
     : judgeDrying(activity, hours, date, now, config);
 }
 
-/** 홈 메인 판정 날짜: 18시 이후면 내일 */
+/** 판정 배지 라벨: 판정이 있으면 좋아요~비추천, 없으면 늦었어요/예보 없음 */
+export function verdictLabel(j: Pick<Judgement, 'verdict' | 'reason'>): string {
+  if (j.verdict) return VERDICT_LABEL[j.verdict];
+  return j.reason === 'too-late' ? TOO_LATE_LABEL : NO_DATA_LABEL;
+}
+
+/** 홈 메인 판정 날짜: switchToTomorrowHour(15시) 이후면 내일 */
 export function mainTargetDate(now: JudgeNow, config: ScoringConfig = SCORING): { date: string; isTomorrow: boolean } {
   return now.hour >= config.switchToTomorrowHour
     ? { date: addDays(now.date, 1), isTomorrow: true }
@@ -211,8 +223,8 @@ export function mainTargetDate(now: JudgeNow, config: ScoringConfig = SCORING): 
 /** 상단 한 문장 */
 export function headline(j: Judgement, isTomorrow: boolean): string {
   const day = isTomorrow ? '내일' : '오늘';
+  if (j.reason === 'too-late') return '오늘은 빨래하기엔 늦었어요';
   if (j.reason === 'no-data' || j.verdict === null) return `${day} 예보를 아직 받지 못했어요`;
-  if (j.reason === 'not-enough-time') return '오늘은 널어 말릴 시간이 부족해요';
   switch (j.verdict) {
     case 'good':
       return `${day}은 빨래하기 딱 좋아요`;

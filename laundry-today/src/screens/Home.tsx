@@ -111,7 +111,7 @@ function HomeContent({ hours, stale, now, mainDate, isTomorrow, previewDate, onO
         {main.map((j) => (
           <button key={j.activity} type="button" className="home-card" onClick={() => onOpenDetail(j.activity, mainDate)}>
             <span className="home-card-name">{ACTIVITY_LABEL[j.activity]}</span>
-            <VerdictBadge verdict={j.verdict} />
+            <VerdictBadge judgement={j} />
             <span className="home-card-score">{j.score === null ? '-' : `${j.score}점`}</span>
           </button>
         ))}
@@ -150,7 +150,7 @@ function HomeContent({ hours, stale, now, mainDate, isTomorrow, previewDate, onO
                   {j.activity !== 'carWash' && formatWindow(j.window) && (
                     <span className="home-preview-window">{formatWindow(j.window)}</span>
                   )}
-                  <VerdictBadge verdict={j.verdict} />
+                  <VerdictBadge judgement={j} />
                 </span>
               </button>
             </li>
@@ -163,7 +163,7 @@ function HomeContent({ hours, stale, now, mainDate, isTomorrow, previewDate, onO
 
 function noWindowText(j: Judgement): string {
   if (j.reason === 'no-data') return '아직 예보가 없어요';
-  if (j.reason === 'not-enough-time') return '오늘은 남은 낮 시간이 부족해요';
+  if (j.reason === 'too-late') return '오늘은 남은 낮 시간이 부족해요. 내일 계획을 확인해보세요';
   return '널어 말리기 좋은 시간이 없어요';
 }
 

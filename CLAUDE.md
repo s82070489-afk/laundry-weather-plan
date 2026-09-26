@@ -15,7 +15,7 @@
 - **CORS**: `worker/src/config/allowedOrigins.ts`. SDK 3.x 호스트 `{appName}.web.tossmini.com`/`private-web`, 2.x 호스트 `apps`/`private-apps` 네 가지 허용. 로컬 Origin은 `ALLOW_DEV_ORIGINS="true"`일 때만
 - **appName 미정** (후보 `laundry-today`): `laundry-today/src/config/appName.ts` 한 곳 + Worker `allowedOrigins.ts`
 - **판정 수치**는 `laundry-today/src/config/scoring.ts`에만. 하늘 감점 구름많음 -5 / 흐림 -10, 습도 70%+ -20 / 85%+ -45
-- **판정 규칙**: 시각별 100점 감점, PTY≠0 시각 0점. 빨래 = 09~18시 남은 시각의 연속 3h+ 구간 최고 평균, 비 예보 시각이 낀 구간은 제외. 추천 시간대 = 최고 평균 -5점 이내 중 가장 긴 구간. 이불 = 습도 1.5배, 4h+. 세차 = 판정일~2일 뒤 PTY≠0 또는 POP≥60 있으면 비추천(0점). 18시 이후 홈은 내일 기준
+- **판정 규칙**: 시각별 100점 감점, PTY≠0 시각 0점. 빨래 = 09~18시 남은 시각의 연속 3h+ 구간 최고 평균, 비 예보 시각이 낀 구간은 제외. 추천 시간대 = 최고 평균 -5점 이내 중 가장 긴 구간. 이불 = 습도 1.5배, 4h+. 세차 = 판정일~2일 뒤 PTY≠0 또는 POP≥60 있으면 비추천(0점). 오늘 남은 낮 시간이 필요 구간(3h/4h)보다 짧으면 비추천이 아니라 "늦었어요"(verdict null, reason `too-late`). 15시(`switchToTomorrowHour`) 이후 홈은 내일 기준
 - **디자인**: TDS 미사용, 배출일 앱 토큰(블루 단일 액센트, 화이트 카드 + 1px 보더). 판정 배지: 좋아요=블루, 괜찮아요=연블루, 아쉬워요·비추천=그레이
 - **뒤로가기 버튼을 직접 그리지 않음** (배출일 앱 심사 반려 사례). `graniteEvent backEvent` + `Screen.close()` + history 동기화
 - **광고**: 배너만(홈 하단). 기본 테스트 ID, `VITE_USE_LIVE_ADS=true`일 때만 라이브 ID. 이 앱용 라이브 adGroupId는 아직 없음(`src/config/app.ts`)

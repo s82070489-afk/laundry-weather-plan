@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SCORING } from '../config/scoring';
 import type { HourlyForecast } from '../weather/types';
-import { bestWindow, formatWindow, headline, judge, mainTargetDate, scoreHour } from './judge';
+import { bestWindow, formatWindow, headline, judge, mainTargetDate, scoreHour, verdictLabel } from './judge';
 
 const TODAY = '20260926';
 const TOMORROW = '20260927';
@@ -102,15 +102,31 @@ describe('빨래 판정', () => {
     // 오전만 좋고 오후는 비
     for (let hour = 13; hour < 24; hour++) day[hour] = h(TODAY, hour, { pty: 1, pop: 80 });
     expect(judge('laundry', day, TODAY, { date: TODAY, hour: 8 }).verdict).toBe('good');
+    // 12시: 남은 시간은 있지만 비 때문에 연속 구간이 없음 → 늦었어요가 아니라 비추천
     const late = judge('laundry', day, TODAY, { date: TODAY, hour: 12 });
     expect(late.verdict).toBe('bad');
+    expect(late.reason).toBeUndefined();
   });
 
-  it('남은 낮 시간이 3시간 미만이면 비추천(not-enough-time)', () => {
+  it('남은 낮 시간이 3시간 미만이면 비추천이 아니라 "늦었어요"(too-late)', () => {
     const j = judge('laundry', flatDay(TODAY), TODAY, { date: TODAY, hour: 16 });
-    expect(j.verdict).toBe('bad');
-    expect(j.reason).toBe('not-enough-time');
-    expect(headline(j, false)).toBe('오늘은 널어 말릴 시간이 부족해요');
+    expect(j.verdict).toBeNull();
+    expect(j.score).toBeNull();
+    expect(j.reason).toBe('too-late');
+    expect(verdictLabel(j)).toBe('늦었어요');
+    expect(headline(j, false)).toBe('오늘은 빨래하기엔 늦었어요');
+  });
+
+  it('이불은 4시간이 필요해서 빨래보다 먼저 늦어진다', () => {
+    const now = { date: TODAY, hour: 15 };
+    expect(judge('laundry', flatDay(TODAY), TODAY, now).verdict).toBe('good');
+    expect(judge('blanket', flatDay(TODAY), TODAY, now).reason).toBe('too-late');
+  });
+
+  it('세차는 늦은 시각이어도 비 소식이 있으면 비추천을 우선한다', () => {
+    const hours = [...flatDay(TODAY), ...flatDay(TOMORROW, { pty: 1 })];
+    expect(judge('carWash', hours, TODAY, { date: TODAY, hour: 17 }).verdict).toBe('bad');
+    expect(judge('carWash', flatDay(TODAY), TODAY, { date: TODAY, hour: 17 }).reason).toBe('too-late');
   });
 
   it('하루 종일 비면 시간 부족이 아니라 그냥 비추천', () => {
@@ -194,9 +210,21 @@ describe('세차 판정', () => {
 });
 
 describe('홈 기준 날짜', () => {
-  it('18시 이후엔 내일 기준', () => {
-    expect(mainTargetDate({ date: TODAY, hour: 17 })).toEqual({ date: TODAY, isTomorrow: false });
-    expect(mainTargetDate({ date: TODAY, hour: 18 })).toEqual({ date: TOMORROW, isTomorrow: true });
+  it('15시(설정값)부터 내일 기준', () => {
+    expect(SCORING.switchToTomorrowHour).toBe(15);
+    expect(mainTargetDate({ date: TODAY, hour: 14 })).toEqual({ date: TODAY, isTomorrow: false });
+    expect(mainTargetDate({ date: TODAY, hour: 15 })).toEqual({ date: TOMORROW, isTomorrow: true });
+    expect(mainTargetDate({ date: TODAY, hour: 17 }, { ...SCORING, switchToTomorrowHour: 18 } as unknown as typeof SCORING)).toEqual({
+      date: TODAY,
+      isTomorrow: false,
+    });
+  });
+
+  it('전환 직전(14시)에도 오늘 메인 판정은 "늦었어요"가 되지 않는다', () => {
+    const now = { date: TODAY, hour: SCORING.switchToTomorrowHour - 1 };
+    for (const a of ['laundry', 'blanket', 'carWash'] as const) {
+      expect(judge(a, flatDay(TODAY), TODAY, now).reason).not.toBe('too-late');
+    }
   });
   it('내일 판정 문구', () => {
     const j = judge('laundry', flatDay(TOMORROW), TOMORROW, { date: TODAY, hour: 19 });
