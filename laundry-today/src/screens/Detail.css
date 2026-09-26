@@ -1,0 +1,141 @@
+.detail-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 12px 20px 80px;
+  background: var(--page);
+}
+
+.detail-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.detail-date {
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.detail-muted {
+  color: var(--muted);
+}
+
+.detail-status {
+  margin-bottom: 16px;
+}
+
+.detail-status-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.detail-score {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.detail-status-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  word-break: keep-all;
+}
+
+.detail-section {
+  margin-bottom: 16px;
+}
+
+.detail-section-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.detail-chart {
+  display: flex;
+  gap: 4px;
+  height: 160px;
+}
+
+.detail-chart-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.detail-chart-value {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.detail-chart-track {
+  flex: 1;
+  width: 100%;
+  max-width: 24px;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 6px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.detail-chart-bar {
+  width: 100%;
+  border-radius: 6px;
+  background: var(--muted);
+}
+
+.detail-chart-bar.is-window {
+  background: var(--blue);
+}
+
+.detail-chart-hour {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.detail-table-wrap {
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-table th {
+  padding: 6px 2px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.detail-table td {
+  padding: 8px 2px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.detail-table-unit,
+.detail-rule {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}

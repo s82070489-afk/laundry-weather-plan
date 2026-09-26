@@ -57,7 +57,19 @@ function logFetchError(error: unknown) {
   }
 }
 
-export async function getForecast(nx: number, ny: number, deps: ForecastDeps = {}): Promise<ForecastResult> {
+/** 같은 격자에 대한 동시 요청은 하나로 합친다 (화면 여러 곳/StrictMode 이중 실행) */
+const inFlight = new Map<string, Promise<ForecastResult>>();
+
+export function getForecast(nx: number, ny: number, deps: ForecastDeps = {}): Promise<ForecastResult> {
+  const key = `${nx},${ny}`;
+  const pending = inFlight.get(key);
+  if (pending) return pending;
+  const promise = fetchForecast(nx, ny, deps).finally(() => inFlight.delete(key));
+  inFlight.set(key, promise);
+  return promise;
+}
+
+async function fetchForecast(nx: number, ny: number, deps: ForecastDeps): Promise<ForecastResult> {
   const {
     fetchFn = fetch,
     storage = typeof localStorage === 'undefined' ? undefined : localStorage,
@@ -74,7 +86,15 @@ export async function getForecast(nx: number, ny: number, deps: ForecastDeps = {
   try {
     if (!proxyUrl) throw new Error('VITE_WEATHER_PROXY_URL이 설정되지 않았어요. .env를 확인해주세요.');
     const res = await fetchFn(`${proxyUrl}${FORECAST_PATH}?nx=${nx}&ny=${ny}`);
-    if (!res.ok) throw new Error(`날씨 프록시 응답 오류 (status: ${res.status})`);
+    if (!res.ok) {
+      // Worker는 기상청 에러코드를 { code }로 전달한다 (22 한도 초과, 30 미등록 키 등)
+      const code = await res
+        .json()
+        .then((body: { code?: string }) => body?.code)
+        .catch(() => undefined);
+      if (code) throw new KmaApiError(code, `날씨 프록시 응답 오류 (status: ${res.status})`);
+      throw new Error(`날씨 프록시 응답 오류 (status: ${res.status})`);
+    }
     const data = parseForecast(await res.json(), nx, ny);
     // Worker가 기상청 호출에 실패해 자기 캐시의 마지막 데이터를 돌려준 경우
     const proxyStale = res.headers.get('X-Proxy-Cache') === 'STALE';

@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "deploy": "ait deploy",
     "build:grid": "python3 scripts/build-grid.py",
-    "check:api": "node scripts/check-weather-api.mjs"
+    "check:api": "tsx scripts/check-weather-api.ts"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "3.2.0",
@@ -25,6 +25,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "vite": "^8.2.2",
     "vitest": "^5.0.2"

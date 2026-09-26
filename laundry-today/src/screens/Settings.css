@@ -96,3 +96,60 @@
   cursor: pointer;
   margin-top: 24px;
 }
+
+.settings-group-title {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.settings-link-button {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.settings-row-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-chevron {
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.settings-select {
+  border: none;
+  border-radius: 10px;
+  background: var(--line);
+  padding: 8px 10px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.settings-select:disabled {
+  color: var(--muted);
+}
+
+.settings-footnote {
+  margin: 20px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}

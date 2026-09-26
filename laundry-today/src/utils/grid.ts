@@ -39,7 +39,11 @@ const DONG_OPTIONS: RegionOption[] = grid.rows
   .filter((row) => row[3] !== '' && !EXCLUDED_SIDO.has(grid.sido[row[1]]))
   .map(toOption);
 
-const normalize = (s: string) => s.replace(/\s+/g, '');
+/**
+ * 검색용 정규화: 공백 제거 + 숫자 앞 "제" 제거.
+ * 매핑표는 행정 표기("우제1동")를 쓰는데 사람들은 보통 "우1동"으로 검색하기 때문.
+ */
+const normalize = (s: string) => s.replace(/\s+/g, '').replace(/제(?=\d)/g, '');
 
 /**
  * 동네 검색. 공백으로 나눈 검색어가 모두 "시도 시군구 동" 라벨에 포함된 읍·면·동을 돌려준다.

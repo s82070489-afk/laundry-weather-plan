@@ -50,3 +50,72 @@ my-element {
     background-color: var(--page);
   }
 }
+
+/* ---- 공통 컴포넌트 ---- */
+
+.verdict-badge {
+  display: inline-block;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.verdict-badge.is-good {
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.verdict-badge.is-okay {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.verdict-badge.is-meh {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.verdict-badge.is-bad,
+.verdict-badge.is-unknown {
+  background: var(--line);
+  color: var(--muted);
+}
+
+.source-notice {
+  margin-top: 20px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.source-notice p {
+  margin: 0 0 2px;
+}
+
+.source-notice-dust {
+  margin-bottom: 8px !important;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--line);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 18px 16px;
+}
+
+.stale-notice {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--line);
+  font-size: 13px;
+  color: var(--ink);
+}

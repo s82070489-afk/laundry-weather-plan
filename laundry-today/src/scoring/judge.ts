@@ -99,14 +99,16 @@ function daySlots(hours: HourlyForecast[], date: string, now: JudgeNow, config: 
 
 /**
  * 연속 minLen시간 이상 구간 중 평균이 가장 높은 구간.
- * 최고 평균 - tolerance 이상인 구간 중 가장 긴 것을 고른다(같으면 평균 높은 쪽, 그다음 이른 쪽).
- * 비·눈 예보(PTY ≠ 0) 시각이 끼어 있는 구간은 평균과 상관없이 후보에서 뺀다 — 널어둔 빨래가 젖는다.
+ * - best: 대표 점수 = 가장 높은 평균
+ * - window: 추천 시간대 = 최고 평균 - tolerance 이상인 구간 중 가장 긴 것
+ *   (같으면 평균 높은 쪽, 그다음 이른 쪽). 점수는 그대로 두고 추천 구간만 넓게 잡는다.
+ * 비·눈 예보(PTY ≠ 0) 시각이 끼어 있는 구간은 후보에서 뺀다 — 널어둔 빨래가 젖는다.
  */
 export function bestWindow(
   scores: HourScore[],
   minLen: number,
   tolerance: number,
-): { startIdx: number; endIdx: number; average: number } | null {
+): { startIdx: number; endIdx: number; best: number } | null {
   type W = { startIdx: number; endIdx: number; average: number };
   const windows: W[] = [];
   for (let i = 0; i < scores.length; i++) {
@@ -123,9 +125,10 @@ export function bestWindow(
   if (windows.length === 0) return null;
   const best = Math.max(...windows.map((w) => w.average));
   const len = (w: W) => w.endIdx - w.startIdx;
-  return windows
+  const chosen = windows
     .filter((w) => w.average >= best - tolerance)
     .sort((a, b) => len(b) - len(a) || b.average - a.average || a.startIdx - b.startIdx)[0];
+  return { startIdx: chosen.startIdx, endIdx: chosen.endIdx, best };
 }
 
 function judgeDrying(
@@ -144,9 +147,13 @@ function judgeDrying(
   if (!hasAnyForDate) return { ...base, verdict: null, score: null, window: null, reason: 'no-data' };
 
   const w = bestWindow(hourly, minWindowHours, config.windowTolerance);
-  if (!w) return { ...base, verdict: 'bad', score: 0, window: null, reason: 'not-enough-time' };
+  if (!w) {
+    // 남은 낮 시간 자체가 짧은지, 비 때문에 연속 구간이 없는지 구분한다
+    const reason = hourly.length < minWindowHours ? 'not-enough-time' : undefined;
+    return { ...base, verdict: 'bad', score: 0, window: null, reason };
+  }
 
-  const score = Math.round(w.average);
+  const score = Math.round(w.best);
   const verdict = toVerdict(score, config);
   return {
     ...base,
@@ -170,7 +177,14 @@ function judgeCarWash(hours: HourlyForecast[], date: string, now: JudgeNow, conf
   const drying = judgeDrying('laundry', hours, date, now, config);
   const result: Judgement = { ...drying, activity: 'carWash' };
   if (rainy) {
-    return { ...result, verdict: 'bad', window: null, reason: 'rain-soon', rainAt: { date: rainy.date, hour: rainy.hour } };
+    return {
+      ...result,
+      verdict: 'bad',
+      score: 0,
+      window: null,
+      reason: 'rain-soon',
+      rainAt: { date: rainy.date, hour: rainy.hour },
+    };
   }
   return result;
 }

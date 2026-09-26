@@ -9,6 +9,11 @@ describe('grid', () => {
     expect(searchRegions('')).toEqual([]);
   });
 
+  it('"우1동"으로 검색해도 행정 표기 "우제1동"을 찾는다', () => {
+    expect(searchRegions('해운대 우1동')[0].label).toBe('부산광역시 해운대구 우제1동');
+    expect(searchRegions('제주 노형')[0].label).toBe('제주특별자치도 제주시 노형동');
+  });
+
   it('세종은 시/도 이름을 두 번 쓰지 않는다', () => {
     expect(searchRegions('조치원')[0].label).toBe('세종특별자치시 조치원읍');
   });
@@ -17,5 +22,18 @@ describe('grid', () => {
     expect(resolveGrid('서울특별시', '종로구', '청운효자동')).toEqual({ nx: 60, ny: 127 });
     expect(resolveGrid('서울특별시', '종로구', '없는동')).toEqual(resolveGrid('서울특별시', '종로구', ''));
     expect(resolveGrid('없는시', '', '')).toBeNull();
+  });
+});
+
+describe('selectedRegion', () => {
+  it('저장된 동네의 격자를 현재 매핑표로 다시 찾는다', async () => {
+    const store = new Map<string, string>();
+    globalThis.localStorage = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+    } as Storage;
+    const { loadSelectedRegion, saveSelectedRegion } = await import('../storage/selectedRegion');
+    saveSelectedRegion({ code: 'x', sido: '서울특별시', sgg: '종로구', dong: '사라진동', label: 'x', nx: 1, ny: 1 });
+    expect(loadSelectedRegion()).toMatchObject(resolveGrid('서울특별시', '종로구', '')!);
   });
 });

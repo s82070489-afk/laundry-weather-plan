@@ -109,6 +109,14 @@ describe('빨래 판정', () => {
     expect(headline(j, false)).toBe('오늘은 널어 말릴 시간이 부족해요');
   });
 
+  it('하루 종일 비면 시간 부족이 아니라 그냥 비추천', () => {
+    const j = judge('laundry', flatDay(TODAY, { pty: 1, pop: 80 }), TODAY, { date: TODAY, hour: 9 });
+    expect(j.verdict).toBe('bad');
+    expect(j.score).toBe(0);
+    expect(j.reason).toBeUndefined();
+    expect(headline(j, false)).toBe('오늘은 실내에서 말리는 게 좋아요');
+  });
+
   it('해당 날짜 예보가 없으면 no-data', () => {
     const j = judge('laundry', flatDay(TODAY), TOMORROW, { date: TODAY, hour: 10 });
     expect(j.verdict).toBeNull();
@@ -143,6 +151,15 @@ describe('이불 판정', () => {
     expect(judge('laundry', day, TOMORROW, now).score).toBe(80);
     expect(judge('blanket', day, TOMORROW, now).score).toBe(70);
   });
+
+  it('대표 점수는 가장 높은 평균, 추천 구간만 여유 있게 넓힌다', () => {
+    const day = flatDay(TOMORROW, { pty: 1 });
+    day[10] = h(TOMORROW, 10, { reh: 70 }); // 80점
+    for (const hour of [11, 12, 13, 14]) day[hour] = h(TOMORROW, hour);
+    const j = judge('laundry', day, TOMORROW, { date: TODAY, hour: 10 });
+    expect(j.score).toBe(100);
+    expect(formatWindow(j.window)).toBe('10시~15시');
+  });
 });
 
 describe('세차 판정', () => {
@@ -155,6 +172,7 @@ describe('세차 판정', () => {
     expect(j.verdict).toBe('bad');
     expect(j.reason).toBe('rain-soon');
     expect(j.rainAt).toEqual({ date: '20260928', hour: 20 });
+    expect(j.score).toBe(0);
   });
 
   it('강수확률 60% 이상 시각이 있으면 비추천', () => {

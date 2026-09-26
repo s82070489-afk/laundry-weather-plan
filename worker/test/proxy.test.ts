@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import worker from '../src/index';
 import { isAllowedOrigin } from '../src/lib/cors';
-import { handleRoute } from '../src/lib/proxy';
+import { clearMemoryCache, handleRoute, normalizeServiceKey } from '../src/lib/proxy';
 import type { Env } from '../src/lib/types';
 import { kmaVilageFcstRoute, recentBaseTimes } from '../src/routes/kmaVilageFcst';
 
@@ -50,6 +50,7 @@ describe('recentBaseTimes', () => {
 
 describe('handleRoute (kma vilage-fcst)', () => {
   const now = kst('2026-09-26T11:30');
+  beforeEach(() => clearMemoryCache());
 
   it('캐시가 없으면 호출 후 저장(MISS), 서비스키·발표시각을 넣어 호출한다', async () => {
     const { kv, store } = fakeKv();
@@ -117,6 +118,28 @@ describe('handleRoute (kma vilage-fcst)', () => {
     (kv.put as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('KV put limit'));
     const r = await handleRoute(kmaVilageFcstRoute, query, envWith(kv), now, (async () => new Response(okBody('1100'))) as unknown as typeof fetch);
     expect(r.status).toBe(200);
+  });
+
+  it('KV 쓰기가 막혀도 같은 isolate에서는 메모리 캐시로 업스트림을 다시 부르지 않는다', async () => {
+    const { kv } = fakeKv();
+    (kv.put as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('KV put limit'));
+    const env = envWith(kv);
+    const fetchFn = vi.fn(async () => new Response(okBody('1100')));
+    await handleRoute(kmaVilageFcstRoute, query, env, now, fetchFn as unknown as typeof fetch);
+    const r = await handleRoute(kmaVilageFcstRoute, query, env, now, fetchFn as unknown as typeof fetch);
+    expect(r.cache).toBe('HIT');
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('Encoding 형태로 등록한 서비스키도 한 번만 인코딩되어 나간다', async () => {
+    expect(normalizeServiceKey('abc%2Bdef%3D%3D')).toBe('abc+def==');
+    expect(normalizeServiceKey('abc+def==')).toBe('abc+def==');
+    const { kv } = fakeKv();
+    const fetchFn = vi.fn(async () => new Response(okBody('1100')));
+    await handleRoute(kmaVilageFcstRoute, query, { ...envWith(kv), KMA_SERVICE_KEY: 'abc%2Bdef%3D%3D' }, now, fetchFn as unknown as typeof fetch);
+    const url = (fetchFn.mock.calls[0] as unknown as [string])[0];
+    expect(url).toContain('serviceKey=abc%2Bdef%3D%3D');
+    expect(new URL(url).searchParams.get('serviceKey')).toBe('abc+def==');
   });
 
   it('격자 좌표 검증', async () => {

@@ -8,6 +8,12 @@ compatibility_date = "2026-09-01"
 binding = "PROXY_CACHE"
 id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
+# Workers Logs: 대시보드에서 에러코드(22 한도 초과, 30 미등록 키 등) 로그를 볼 수 있게 한다.
+# 요청별 메타데이터(IP·헤더 등) 기록은 끄고 코드에서 남기는 console 로그만 보관한다.
+[observability.logs]
+enabled = true
+invocation_logs = false
+
 [vars]
 # 로컬 개발(localhost/127.0.0.1) Origin 허용 여부. 실서비스 안정화 후 "false" 권장.
 ALLOW_DEV_ORIGINS = "true"
