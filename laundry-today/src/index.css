@@ -6,6 +6,7 @@
   --line: #f2f4f6;
   --blue: #3182f6;
   --blue-soft: #eaf2ff;
+  --ink-sub: #4e5968;
 
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   color: var(--ink);
@@ -78,9 +79,10 @@ my-element {
   color: var(--ink);
 }
 
+/* 비추천: 레드 없이도 확실히 구분되게 진한 잉크 배경 + 흰 글씨 */
 .verdict-badge.is-bad {
-  background: var(--line);
-  color: var(--muted);
+  background: var(--ink);
+  color: #ffffff;
 }
 
 .verdict-badge.is-unknown {

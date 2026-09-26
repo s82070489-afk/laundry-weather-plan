@@ -1,7 +1,7 @@
 import BannerAd from '../components/BannerAd';
 import SourceNotice from '../components/SourceNotice';
 import VerdictBadge from '../components/VerdictBadge';
-import { BANNER_AD_GROUP_ID, REFERENCE_NOTICE_TEXT } from '../config/app';
+import { BANNER_AD_GROUP_ID } from '../config/app';
 import { INDOOR_DRYING_TIPS } from '../content/indoorTips';
 import type { ForecastState } from '../hooks/useForecast';
 import {
@@ -13,6 +13,7 @@ import {
   type Activity,
   type Judgement,
 } from '../scoring/judge';
+import { reasonText } from '../scoring/reason';
 import type { SelectedRegion } from '../storage/selectedRegion';
 import { formatDateLabel } from '../utils/format';
 import { addDays, toKst } from '../weather/kst';
@@ -96,6 +97,7 @@ function HomeContent({ hours, stale, now, mainDate, isTomorrow, previewDate, onO
   const laundry = main[0];
   const window = formatWindow(laundry.window);
   const previewLabel = isTomorrow ? '모레' : '내일';
+  const reason = reasonText(laundry, isTomorrow ? '내일' : '오늘');
 
   return (
     <>
@@ -105,14 +107,15 @@ function HomeContent({ hours, stale, now, mainDate, isTomorrow, previewDate, onO
         {isTomorrow ? '내일 빨래 계획' : '오늘의 빨래'} · {formatDateLabel(mainDate)}
       </p>
       <h1 className="home-headline">{headline(laundry, isTomorrow)}</h1>
-      <p className="home-reference">{REFERENCE_NOTICE_TEXT}</p>
+      {reason ? <p className="home-reason">{reason}</p> : <div className="home-reason-spacer" />}
 
       <section className="home-cards" aria-label="판정">
         {main.map((j) => (
           <button key={j.activity} type="button" className="home-card" onClick={() => onOpenDetail(j.activity, mainDate)}>
             <span className="home-card-name">{ACTIVITY_LABEL[j.activity]}</span>
             <VerdictBadge judgement={j} />
-            <span className="home-card-score">{j.score === null ? '-' : `${j.score}점`}</span>
+            {/* 비추천·늦었어요는 점수 없이 배지만 */}
+            {j.verdict !== 'bad' && j.score !== null && <span className="home-card-score">{j.score}점</span>}
           </button>
         ))}
       </section>

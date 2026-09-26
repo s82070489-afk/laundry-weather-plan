@@ -42,7 +42,7 @@ export default function Detail({ activity, date, forecast }: DetailProps) {
       <section className="detail-status card">
         <div className="detail-status-top">
           <VerdictBadge judgement={j} />
-          {j.score !== null && <span className="detail-score">{j.score}점</span>}
+          {j.verdict !== 'bad' && j.score !== null && <span className="detail-score">{j.score}점</span>}
         </div>
         <p className="detail-status-text">{statusText(j, nowKst.date)}</p>
       </section>
