@@ -1,0 +1,127 @@
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 12px 20px 80px;
+  background: var(--page);
+}
+
+.onboarding-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.onboarding-subtitle {
+  margin: 0 0 28px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.onboarding-field-label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.onboarding-search {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  background: var(--line);
+  padding: 14px 16px;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.onboarding-search::placeholder {
+  color: var(--muted);
+}
+
+.onboarding-error {
+  color: #f04452;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.onboarding-loading {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.onboarding-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 40px 16px;
+}
+
+.onboarding-empty-title {
+  margin: 12px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.onboarding-empty-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.onboarding-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onboarding-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 16px;
+  font-size: 16px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.onboarding-option.is-selected {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+}
+
+.onboarding-spacer {
+  flex: 1;
+}
+
+.onboarding-cta {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px;
+  cursor: pointer;
+  margin-top: 24px;
+}
+
+.onboarding-cta:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+}

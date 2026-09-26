@@ -1,0 +1,85 @@
+import { addDays, toKst } from '../lib/kst';
+import type { ProxyRoute } from '../lib/types';
+
+const ENDPOINT = 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+const BASE_HOURS = [2, 5, 8, 11, 14, 17, 20, 23];
+const AVAILABLE_AFTER_MINUTES = 10;
+
+/**
+ * 조회 가능한 발표시각을 최신순으로 n개. (앱의 src/weather/baseTime.ts와 같은 규칙)
+ * 00:00~02:09는 전날 23시 발표가 최신.
+ */
+export function recentBaseTimes(now: Date, count: number): { baseDate: string; baseTime: string }[] {
+  const { date, hour, minute } = toKst(now);
+  const minutesOfDay = hour * 60 + minute;
+  const result: { baseDate: string; baseTime: string }[] = [];
+  let day = date;
+  let idx = BASE_HOURS.findLastIndex((h) => minutesOfDay >= h * 60 + AVAILABLE_AFTER_MINUTES);
+  if (idx < 0) {
+    day = addDays(date, -1);
+    idx = BASE_HOURS.length - 1;
+  }
+  while (result.length < count) {
+    result.push({ baseDate: day, baseTime: `${String(BASE_HOURS[idx]).padStart(2, '0')}00` });
+    idx -= 1;
+    if (idx < 0) {
+      day = addDays(day, -1);
+      idx = BASE_HOURS.length - 1;
+    }
+  }
+  return result;
+}
+
+function parseGridCoord(value: string | null, max: number): string | null {
+  if (!value || !/^\d{1,3}$/.test(value)) return null;
+  const n = Number(value);
+  return n >= 1 && n <= max ? String(n) : null;
+}
+
+/** 기상청 단기예보 조회 (getVilageFcst). 클라이언트는 nx, ny만 보내고 발표시각은 Worker가 계산한다. */
+export const kmaVilageFcstRoute: ProxyRoute = {
+  path: '/kma/vilage-fcst',
+  secretName: 'KMA_SERVICE_KEY',
+
+  parseParams(query) {
+    const nx = parseGridCoord(query.get('nx'), 149);
+    const ny = parseGridCoord(query.get('ny'), 253);
+    if (!nx || !ny) return 'nx(1~149), ny(1~253) 격자 좌표가 필요해요';
+    return { nx, ny };
+  },
+
+  cacheKey: ({ nx, ny }) => `kma-vilage-fcst:${nx}:${ny}`,
+
+  candidates({ nx, ny }, serviceKey, now) {
+    // 발표 직후엔 최신 발표분이 아직 없을 수 있어(NO_DATA) 직전 발표분까지 시도한다
+    return recentBaseTimes(now, 2).map(({ baseDate, baseTime }) => {
+      const params = new URLSearchParams({
+        serviceKey,
+        pageNo: '1',
+        numOfRows: '1000',
+        dataType: 'JSON',
+        base_date: baseDate,
+        base_time: baseTime,
+        nx,
+        ny,
+      });
+      return { version: `${baseDate}${baseTime}`, url: `${ENDPOINT}?${params.toString()}` };
+    });
+  },
+
+  check(json) {
+    const header = (json as { response?: { header?: { resultCode?: string; resultMsg?: string } } })?.response
+      ?.header;
+    if (header?.resultCode === '00') return { ok: true };
+    return { ok: false, code: header?.resultCode ?? 'INVALID_RESPONSE', message: header?.resultMsg ?? '' };
+  },
+
+  errorLabels: {
+    '03': 'NO_DATA',
+    '22': 'LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS (일일 한도 초과)',
+    '30': 'SERVICE_KEY_IS_NOT_REGISTERED (미등록 키)',
+  },
+
+  // 단기예보는 글피까지 오므로 최대 3일간 "마지막 정상 응답"으로 쓸 만하다
+  retentionSeconds: 3 * 24 * 60 * 60,
+};
