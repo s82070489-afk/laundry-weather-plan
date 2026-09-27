@@ -18,4 +18,6 @@ invocation_logs = false
 # 로컬 개발(localhost/127.0.0.1) Origin 허용 여부. 실서비스 안정화 후 "false" 권장.
 ALLOW_DEV_ORIGINS = "true"
 
-# 비밀값(서비스키)은 여기 쓰지 않는다 → `npx wrangler secret put KMA_SERVICE_KEY`
+# 비밀값(서비스키)은 여기 쓰지 않는다 →
+#   `npx wrangler secret put KMA_SERVICE_KEY`      (기상청 단기예보, 오늘 빨래해도 될까)
+#   `npx wrangler secret put HOLIDAY_SERVICE_KEY`  (한국천문연구원 특일 정보, 연휴계산기)

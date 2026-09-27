@@ -1,4 +1,6 @@
-import type { CachedEntry, Env, ProxyRoute } from './types';
+import type { CachedEntry, Env, ProxyCacheStatus, ProxyRoute } from './types';
+
+export type { ProxyCacheStatus };
 
 const UPSTREAM_TIMEOUT_MS = 8000;
 
@@ -34,8 +36,6 @@ export function normalizeServiceKey(key: string): string {
     return key;
   }
 }
-
-export type ProxyCacheStatus = 'HIT' | 'MISS' | 'STALE';
 
 export interface ProxyResult {
   status: number;
@@ -83,7 +83,7 @@ async function fetchPage(route: ProxyRoute, url: string, version: string, fetchF
     const text = await res.text();
     let json: unknown;
     try {
-      json = JSON.parse(text);
+      json = route.parseBody ? route.parseBody(text) : JSON.parse(text);
     } catch {
       // 공공데이터포털은 인증 오류 등을 XML로 줄 때가 있다
       console.warn(`[upstream] ${route.path} v=${version} non-JSON: ${text.slice(0, 200)}`);
@@ -105,8 +105,10 @@ async function fetchPage(route: ProxyRoute, url: string, version: string, fetchF
 /**
  * 공통 프록시 흐름:
  *   1) 캐시에 현재 최신 버전이 있으면 그대로 (HIT) — 업스트림 호출 없음
+ *      (route.isFresh가 있으면 그걸로 판단. 예: 공휴일은 저장 후 24시간)
  *   2) 없으면 후보 버전을 최신순으로 호출, 처음 성공한 응답을 저장하고 반환 (MISS)
- *      페이지가 나뉘는 API는 전체 페이지를 받아 합친 뒤 저장
+ *      페이지가 나뉘는 API는 전체 페이지를 받아 합친 뒤 저장. route.normalize가 있으면 정규화한 결과를 저장
+ *      route.shouldCache가 false인 응답(예: 0건)은 저장하지 않는다 — 이전 정상 응답이 있으면 그걸 STALE로
  *   3) 전부 실패하면 캐시의 마지막 정상 응답을 반환 (STALE), 그것도 없으면 502
  */
 export async function handleRoute(
@@ -116,7 +118,7 @@ export async function handleRoute(
   now: Date,
   fetchFn: typeof fetch = fetch,
 ): Promise<ProxyResult> {
-  const params = route.parseParams(query);
+  const params = route.parseParams(query, now);
   if (typeof params === 'string') return jsonError(400, params);
 
   const rawKey = env[route.secretName];
@@ -129,10 +131,12 @@ export async function handleRoute(
   const key = route.cacheKey(params);
   const candidates = route.candidates(params, serviceKey, now);
   const cached = await readCache(env, key);
+  const render = (body: string, cache: ProxyCacheStatus) => (route.renderBody ? route.renderBody(body, cache) : body);
 
-  if (cached && cached.version >= candidates[0].version) {
+  const fresh = cached && (route.isFresh ? route.isFresh(cached, now) : cached.version >= candidates[0].version);
+  if (cached && fresh) {
     rememberInMemory(key, cached);
-    return { status: 200, body: cached.body, cache: 'HIT', version: cached.version };
+    return { status: 200, body: render(cached.body, 'HIT'), cache: 'HIT', version: cached.version };
   }
 
   let lastCode = 'UPSTREAM_ERROR';
@@ -145,6 +149,7 @@ export async function handleRoute(
       continue;
     }
 
+    let json = first.json;
     let body = first.text;
     const pagination = route.pagination;
     if (pagination) {
@@ -166,16 +171,35 @@ export async function handleRoute(
           lastCode = failed;
           continue;
         }
-        body = JSON.stringify(pagination.merge(pages));
+        json = pagination.merge(pages);
+        body = JSON.stringify(json);
       }
     }
 
+    if (route.normalize) {
+      json = route.normalize(json, params, now);
+      body = JSON.stringify(json);
+    } else if (route.parseBody) {
+      // 원문이 XML 등일 수 있어 파싱한 결과를 JSON으로 다시 쓴다
+      body = JSON.stringify(json);
+    }
+
+    if (route.shouldCache && !route.shouldCache(json)) {
+      if (cached) {
+        // 이전에 정상 데이터를 받은 적이 있는데 비어 있으면 일시적인 이상으로 보고 이전 데이터를 쓴다
+        console.warn(`[upstream] ${route.path} v=${candidate.version} 저장하지 않는 응답(빈 결과) — 이전 응답 유지`);
+        lastCode = 'EMPTY';
+        continue;
+      }
+      return { status: 200, body: render(body, 'MISS'), cache: 'MISS', version: candidate.version };
+    }
+
     await writeCache(env, key, { version: candidate.version, savedAt: now.getTime(), body }, route.retentionSeconds);
-    return { status: 200, body, cache: 'MISS', version: candidate.version };
+    return { status: 200, body: render(body, 'MISS'), cache: 'MISS', version: candidate.version };
   }
 
   if (cached) {
-    return { status: 200, body: cached.body, cache: 'STALE', version: cached.version };
+    return { status: 200, body: render(cached.body, 'STALE'), cache: 'STALE', version: cached.version };
   }
   return jsonError(502, '공공데이터 API 호출에 실패했어요', lastCode);
 }

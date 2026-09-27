@@ -8,6 +8,7 @@
  */
 export const APP_NAMES: readonly string[] = [
   'laundry-today', // 오늘 빨래해도 될까 (appName 확정 시 함께 수정)
+  'holiday-planner', // 연휴계산기 (appName 미정 — 후보 holiday-planner / long-weekend. 확정 시 앱 src/config/appName.ts와 함께 수정)
 ];
 
 export const TOSS_MINIAPP_HOST_TEMPLATES: readonly string[] = [

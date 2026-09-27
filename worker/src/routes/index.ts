@@ -1,4 +1,5 @@
 import type { ProxyRoute } from '../lib/types';
+import { holidaysRoute } from './holidays';
 import { kmaVilageFcstRoute } from './kmaVilageFcst';
 
 /**
@@ -8,4 +9,7 @@ import { kmaVilageFcstRoute } from './kmaVilageFcst';
  *   3) `npx wrangler secret put <secretName>`으로 서비스키 등록
  *   4) config/allowedOrigins.ts의 APP_NAMES에 새 앱 appName 추가
  */
-export const ROUTES: readonly ProxyRoute[] = [kmaVilageFcstRoute];
+export const ROUTES: readonly ProxyRoute[] = [
+  kmaVilageFcstRoute, // 오늘 빨래해도 될까 — 기상청 단기예보
+  holidaysRoute, // 연휴계산기 — 한국천문연구원 공휴일
+];

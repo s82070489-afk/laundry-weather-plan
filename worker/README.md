@@ -1,13 +1,18 @@
 # public-data-proxy (Cloudflare Worker)
 
-공공데이터포털 API용 공통 프록시예요. 서비스키를 Worker 비밀값으로 숨기고, 요청 파라미터 단위로 응답을 캐싱해 여러 사용자가 함께 써요. 지금은 "오늘 빨래해도 될까"의 기상청 단기예보 라우트 하나가 있고, 다음 공공데이터 앱도 라우트만 추가해서 같은 Worker를 쓰면 돼요.
+공공데이터포털 API용 공통 프록시예요. 서비스키를 Worker 비밀값으로 숨기고, 요청 파라미터 단위로 응답을 캐싱해 여러 사용자가 함께 써요. 다음 공공데이터 앱도 라우트만 추가해서 같은 Worker를 쓰면 돼요.
+
+| 경로 | 앱 | 원본 API | 비밀값 |
+|---|---|---|---|
+| `GET /kma/vilage-fcst?nx=&ny=` | 오늘 빨래해도 될까 (`laundry-today`) | 기상청 단기예보 `getVilageFcst` | `KMA_SERVICE_KEY` |
+| `GET /holidays?year=` | 연휴계산기 (`holiday-planner`) | 한국천문연구원 특일 정보 `getRestDeInfo` | `HOLIDAY_SERVICE_KEY` |
 
 ```
 앱(토스 미니앱) ──GET /kma/vilage-fcst?nx=60&ny=127──▶ Worker ──serviceKey 추가──▶ apis.data.go.kr
                  ◀── 기상청 원본 JSON + X-Proxy-Cache ──┘   └─ KV: 격자별 마지막 정상 응답
 ```
 
-## 동작 방식
+## 동작 방식 — 기상청 단기예보 (`/kma/vilage-fcst`)
 
 | 상황 | 동작 | `X-Proxy-Cache` |
 |---|---|---|
@@ -21,6 +26,25 @@
 - 허용된 Origin(앱인토스 미니앱 도메인)에서 온 요청만 받아요. 그 외에는 `403`을 돌려줘요.
 
 > Cache API(`caches.default`)는 `*.workers.dev` 주소에서 동작하지 않아서(유료 커스텀 도메인 필요) KV를 써요.
+
+## 동작 방식 — 공휴일 (`/holidays`)
+
+`GET /holidays?year=2026` → `{ year, holidays: [{ date: "2026-10-03", name: "개천절" }, ...], fetchedAt, cache: "HIT" | "MISS" | "STALE" }`
+
+- 원본은 `getRestDeInfo`를 연 단위로 불러요 (`pageNo=1`, `numOfRows=100`, `solYear`, `_type=json`, `solMonth` 생략).
+- 응답 정규화: `items.item`이 1건이면 객체, 0건이면 `items`가 빈 문자열로 와도 항상 배열로 바꾸고, `locdate`(20261003) → `"2026-10-03"`, `isHoliday === "Y"`인 것만 날짜순으로 줘요. `_type=json`인데 XML로 오면(인증 오류 등) XML을 파싱해서 같은 형식으로 처리해요.
+- `year`는 KST 기준 올해-1 ~ 올해+1만 받아요. 그 외는 `400`.
+
+| 상황 | 동작 | `cache` |
+|---|---|---|
+| KV `holidays:{year}`에 저장한 지 24시간 안 | 원본 호출 없이 캐시 응답 (`fetchedAt`은 처음 받은 시각) | `HIT` |
+| 24시간 지남 / 캐시 없음 | 원본 호출 → 정규화 → KV 저장(400일 보관) → 응답. 임시공휴일은 최대 하루 늦게 반영 | `MISS` |
+| 원본 실패(한도 초과·키 오류·장애) | 만료된 캐시라도 **마지막 정상 응답** 반환 | `STALE` |
+| 0건 (내년 공휴일 발표 전) | 저장하지 않고 `holidays: []` 반환 → 발표되면 바로 반영 | `MISS` |
+| 0건인데 예전에 받은 데이터가 있음 | 일시적 이상으로 보고 이전 데이터 반환 | `STALE` |
+| 실패 + 캐시 없음 | `502 { error, code }` | - |
+
+> 0건은 저장하지 않아서 내년 공휴일이 발표되기 전(보통 상반기)에는 내년 요청이 매번 원본까지 가요. 앱이 기기에 6시간 캐시해서 호출 수를 줄여요. 사용자가 많아져 한도가 걱정되면 0건 응답에 짧은 메모리 캐시를 두는 방법이 있어요.
 
 ## 배포하기 (처음 한 번)
 
@@ -56,7 +80,9 @@ binding = "PROXY_CACHE"
 id = "여기에_출력된_id"
 ```
 
-### 4. 기상청 서비스키를 비밀값으로 등록하기
+### 4. 서비스키를 비밀값으로 등록하기
+
+기상청 단기예보(`KMA_SERVICE_KEY`)와 한국천문연구원 특일 정보(`HOLIDAY_SERVICE_KEY`)를 각각 등록해요. 같은 공공데이터포털 계정이면 두 값은 같은 키여도 되지만, **활용신청은 API마다 따로** 해야 해요. 아래는 기상청 예시이고, 공휴일은 [연휴계산기 경로 추가 배포](#연휴계산기-경로-추가-배포-windows-powershell-5)를 보세요.
 
 1. [공공데이터포털](https://www.data.go.kr)에서 **기상청_단기예보 ((구)_동네예보) 조회서비스**를 활용신청해요(자동승인). 배출일 앱과 같은 계정이라도 API마다 따로 신청해야 해요. 승인 직후 1시간 정도는 `SERVICE_KEY_IS_NOT_REGISTERED`(30) 오류가 날 수 있어요.
 2. 마이페이지에서 **일반 인증키(Decoding)** 값을 복사해요. Encoding 값을 넣어도 Worker가 알아서 풀어서 쓰니까 동작은 해요.
@@ -94,6 +120,28 @@ WEATHER_PROXY_URL=https://public-data-proxy.<서브도메인>.workers.dev npm ru
 VITE_WEATHER_PROXY_URL=https://public-data-proxy.<서브도메인>.workers.dev
 ```
 
+### 연휴계산기 경로 추가 배포 (Windows PowerShell 5)
+
+이미 배포한 Worker에 `/holidays`를 더할 때예요. `&&` 없이 한 줄씩 실행하세요.
+
+1. [공공데이터포털](https://www.data.go.kr)에서 **한국천문연구원_특일 정보**를 활용신청해요(자동승인). 승인 직후 1시간 정도는 `SERVICE_KEY_IS_NOT_REGISTERED`(30)가 날 수 있어요.
+2. 비밀값 등록 → 배포. 첫 명령에서 값을 물으면 마이페이지의 **일반 인증키(Decoding)** 를 붙여 넣어요 (파일·채팅에 붙여 넣지 마세요).
+
+```powershell
+cd worker
+npx wrangler secret put HOLIDAY_SERVICE_KEY
+npx wrangler deploy
+```
+
+3. 확인 (앱 폴더에서). 올해·내년 건수와 `cache`가 나오면 성공이고, 한 번 더 실행하면 `cache=HIT`이 나와야 해요.
+
+```powershell
+cd ..\holiday-planner
+npm install
+$env:HOLIDAY_PROXY_URL = "https://public-data-proxy.s82070489.workers.dev"
+npm run check:api
+```
+
 ### 출시 후
 
 - `wrangler.toml`의 `ALLOW_DEV_ORIGINS`를 `"false"`로 바꾸고 `npx wrangler deploy`로 다시 배포하면 localhost 요청이 막혀요. 로컬 개발이나 위 확인 스크립트를 쓸 때는 다시 `"true"`로 바꿔요.
@@ -115,14 +163,17 @@ npm run typecheck
 | `src/config/allowedOrigins.ts` | CORS 허용 Origin. `APP_NAMES`에 appName을 추가하면 `{appName}.web / private-web / apps / private-apps.tossmini.com` 네 호스트가 허용돼요 |
 | `src/routes/index.ts` | 라우트 등록부 |
 | `src/routes/kmaVilageFcst.ts` | 기상청 단기예보 라우트 (파라미터 검증, 발표시각 계산, 에러코드) |
+| `src/routes/holidays.ts` | 공휴일 라우트 (연도 검증, 응답 정규화, 24시간 신선도, 0건 미저장) |
 | `src/lib/proxy.ts` | 공통 흐름 (캐시 → 업스트림 → fallback) |
+| `src/lib/xml.ts` | 공공데이터포털 XML 응답 → JSON과 같은 모양 (작은 파서) |
 | `wrangler.toml` | KV 바인딩, 로그 설정, `ALLOW_DEV_ORIGINS` |
 
-> appName이 `laundry-today`에서 바뀌면 `allowedOrigins.ts`도 같이 바꿔야 해요.
+> appName이 `laundry-today`·`holiday-planner`에서 바뀌면 `allowedOrigins.ts`도 같이 바꿔야 해요.
 
 ## 새 공공데이터 API 추가하기
 
 1. `src/routes/<이름>.ts`에 `ProxyRoute`를 구현해요. 경로, 비밀값 이름, 허용 파라미터 검증, 캐시 키, 업스트림 URL 후보, 정상 응답 판별, 보관 기간을 정해요. 결과가 여러 페이지로 나뉘는 API면 `pagination`(페이지 크기, 전체 건수, 페이지 URL, 합치기)도 채워요.
+   - 선택 항목: `parseBody`(XML도 받기), `normalize`(앱에 줄 모양으로 정규화해 저장), `shouldCache`(0건 등 저장 안 함), `isFresh`(발표 버전이 없는 데이터의 신선도, 예: 24시간), `renderBody`(응답 본문에 캐시 상태 넣기). 비워 두면 원본 그대로 저장·응답하고 버전으로 신선도를 판단해요. 예시는 `src/routes/holidays.ts`
 2. `src/routes/index.ts`의 `ROUTES`에 추가해요.
 3. `npx wrangler secret put <비밀값 이름>`으로 키를 등록해요. data.go.kr 키라면 같은 키를 다른 이름으로 한 번 더 등록해도 돼요.
 4. 새 앱의 appName을 `src/config/allowedOrigins.ts`의 `APP_NAMES`에 추가하고 배포해요.
@@ -136,5 +187,6 @@ npm run typecheck
 | KV 읽기 | 10만 회/일 | 메모리 캐시에 없을 때 요청당 1회 |
 | KV 쓰기 | 1,000회/일 | 격자 × 발표시각(하루 8회)마다 1회 → 하루 약 125개 격자까지. 넘으면 KV 저장만 실패하고 메모리 캐시로 계속 동작 |
 | 기상청 개발계정 | 10,000회/일 | 격자 × 발표시각마다 1~2회 (1000건 초과 시 페이지당 1회 추가) |
+| 특일 정보 개발계정 | 10,000회/일 | 연도당 하루 1회. 발표 전(0건)인 내년은 요청마다 1회 (앱 기기 캐시 6시간) |
 
 사용량이 늘면 공공데이터포털에서 운영계정으로 전환하고, KV 쓰기가 부족하면 Workers Paid($5/월)를 검토하세요.
