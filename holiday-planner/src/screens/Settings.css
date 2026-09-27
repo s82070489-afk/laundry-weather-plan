@@ -1,0 +1,119 @@
+.settings-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 12px 20px calc(40px + env(safe-area-inset-bottom, 0px));
+  background: var(--page);
+}
+
+.settings-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.settings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-row-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.settings-row-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.settings-switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--line);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.settings-switch.is-on {
+  background: var(--blue);
+}
+
+.settings-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease;
+}
+
+.settings-switch.is-on .settings-switch-knob {
+  transform: translateX(18px);
+}
+
+.settings-group-title {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.settings-row-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-chevron {
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.settings-footnote {
+  margin: 20px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.settings-row-value {
+  flex-shrink: 0;
+  font-size: 15px;
+  color: var(--ink-sub);
+}

@@ -1,0 +1,109 @@
+.segmented {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--line);
+}
+
+.segmented-item {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  padding: 10px 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.segmented-item.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.recommend-range {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+  word-break: keep-all;
+}
+
+.recommend-empty {
+  margin: 0 0 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.recommend-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rec-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rec-total {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-sub);
+}
+
+.rec-total strong {
+  margin-right: 2px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--blue);
+}
+
+.rec-efficiency {
+  flex-shrink: 0;
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rec-period {
+  margin: 6px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rec-holidays {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  word-break: keep-all;
+}
+
+.rec-leave {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.rec-leave-label {
+  flex-shrink: 0;
+  color: var(--muted);
+}
