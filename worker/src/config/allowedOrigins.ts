@@ -7,7 +7,7 @@
  * 전환기라 네 가지를 모두 허용한다.
  */
 export const APP_NAMES: readonly string[] = [
-  'laundry-today', // 오늘 빨래해도 될까 (appName 확정 시 함께 수정)
+  'laundry-today', // 오늘의 빨래지수 (appName 확정)
   'holiday-planner', // 연휴계산기 (appName 미정 — 후보 holiday-planner / long-weekend. 확정 시 앱 src/config/appName.ts와 함께 수정)
 ];
 

@@ -71,7 +71,7 @@ export default function Home({ region, forecast, onReload, onOpenDetail, onOpenS
         />
       )}
 
-      <BannerAd adGroupId={BANNER_AD_GROUP_ID} />
+      {BANNER_AD_GROUP_ID && <BannerAd adGroupId={BANNER_AD_GROUP_ID} />}
 
       <SourceNotice
         baseDate={forecast.status === 'ready' ? forecast.data.baseDate : undefined}

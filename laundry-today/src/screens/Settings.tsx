@@ -78,17 +78,22 @@ export default function Settings({ region, onChangeRegion, onSaved }: SettingsPr
         </li>
       </ul>
 
-      <h2 className="settings-group-title">정보</h2>
-      <ul className="settings-list">
-        <li className="settings-row">
-          <button type="button" className="settings-row-button" onClick={() => openExternal(PRIVACY_POLICY_URL)}>
-            <span className="settings-row-title">개인정보처리방침</span>
-            <span className="settings-chevron" aria-hidden="true">
-              ›
-            </span>
-          </button>
-        </li>
-      </ul>
+      {/* 링크가 아직 없으면(PRIVACY_POLICY_URL 비어 있음) 정보 영역을 숨긴다 */}
+      {PRIVACY_POLICY_URL && (
+        <>
+          <h2 className="settings-group-title">정보</h2>
+          <ul className="settings-list">
+            <li className="settings-row">
+              <button type="button" className="settings-row-button" onClick={() => openExternal(PRIVACY_POLICY_URL)}>
+                <span className="settings-row-title">개인정보처리방침</span>
+                <span className="settings-chevron" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            </li>
+          </ul>
+        </>
+      )}
 
       <p className="settings-footnote">
         {WEATHER_SOURCE_TEXT}

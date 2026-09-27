@@ -1,4 +1,4 @@
-# 오늘 빨래해도 될까 (laundry-today)
+# 오늘의 빨래지수 (laundry-today)
 
 기상청 단기예보로 우리 동네의 오늘·내일 빨래, 이불 널기, 세차 적합도를 알려주는 앱인토스(토스 미니앱) 비게임 미니앱이에요. 공공데이터 생활정보 시리즈 1번이고, 기획은 [`PLAN.md`](./PLAN.md), 시리즈 공통 규칙은 [루트 README](../README.md)를 보세요.
 
@@ -41,7 +41,7 @@ npm run check:api -- "서울 마포 서교" "광주 동구 충장"
 ```
 src/
   config/
-    appName.ts      appName 상수 (미정 — 여기 한 곳만 바꾸면 됨)
+    appName.ts      appName 상수 (확정: laundry-today)
     app.ts          프록시 주소, 광고 ID, 안내 문구, 개인정보처리방침 URL
     scoring.ts      판정 기준 수치 (튜닝은 이 파일만)
   scoring/
@@ -85,17 +85,16 @@ python3 scripts/build-grid.py data-src/<새파일>.xlsx
 
 ## 광고 ID
 
-기본값은 항상 테스트 광고 ID(`ait-ad-test-banner-id`)예요. 이 앱 콘솔에서 배너 광고 그룹을 만든 뒤 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID`를 채우고, **스토어 배포용 최종 빌드에서만** 다음을 실행하세요.
+기본값은 항상 테스트 광고 ID(`ait-ad-test-banner-id`)예요. 이 앱 콘솔에서 배너 광고 그룹을 만든 뒤 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID`를 채우고(지금은 발급 대기라 비어 있음), **스토어 배포용 최종 빌드에서만** 다음을 실행하세요. 라이브 ID가 비어 있는 채로 운영 빌드를 하면 광고 영역이 아예 나오지 않아요(테스트 ID로 대체하지 않음).
 
 ```bash
 VITE_USE_LIVE_ADS=true npm run build
 ```
 
-## appName 확정 시
+## appName
 
-1. `src/config/appName.ts`의 `APP_NAME`을 바꿔요. `apps-in-toss.config.ts`와 저장소 키가 이 값을 따라가요.
-2. `../worker/src/config/allowedOrigins.ts`의 `APP_NAMES`도 바꾸고 Worker를 다시 배포해요.
+확정: `laundry-today` (한국어 앱 이름 "오늘의 빨래지수"). `src/config/appName.ts`의 `APP_NAME`을 `apps-in-toss.config.ts`와 저장소 키가 따라가고, Worker의 `../worker/src/config/allowedOrigins.ts`에도 같은 값이 있어요. 한국어 이름은 `src/config/app.ts`의 `APP_DISPLAY_NAME`과 `index.html` 제목에 있어요(앱인토스 config에는 표시 이름 필드가 없어 콘솔에서 입력).
 
 ## 개인정보처리방침
 
-[`PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) — 배출일 앱 방침을 바탕으로 날씨 중계 서버 내용을 추가했어요. 설정 화면 링크는 `src/config/app.ts`의 `PRIVACY_POLICY_URL`이에요. 지금은 이 저장소 `main` 브랜치의 파일을 가리켜서, `main`에 병합해야 열려요.
+[`PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) — 배출일 앱 방침을 바탕으로 날씨 중계 서버 내용을 추가했어요. 설정 화면 링크는 `src/config/app.ts`의 `PRIVACY_POLICY_URL`이에요. Notion 공개 페이지를 만든 뒤 넣을 예정이라 지금은 비어 있고, 비어 있는 동안 설정 화면의 "정보" 영역은 숨겨져요.

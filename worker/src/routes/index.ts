@@ -10,6 +10,6 @@ import { kmaVilageFcstRoute } from './kmaVilageFcst';
  *   4) config/allowedOrigins.ts의 APP_NAMES에 새 앱 appName 추가
  */
 export const ROUTES: readonly ProxyRoute[] = [
-  kmaVilageFcstRoute, // 오늘 빨래해도 될까 — 기상청 단기예보
+  kmaVilageFcstRoute, // 오늘의 빨래지수 — 기상청 단기예보
   holidaysRoute, // 연휴계산기 — 한국천문연구원 공휴일
 ];

@@ -6,7 +6,7 @@
 
 | # | 앱 | 한 줄 소개 | 공공데이터 | 문서 |
 |---|---|---|---|---|
-| 1 | **오늘 빨래해도 될까** [`laundry-today/`](./laundry-today) | 우리 동네 날씨로 오늘 빨래·이불 널기·세차 가능 여부 | 기상청 단기예보 | [기획](./laundry-today/PLAN.md) · [README](./laundry-today/README.md) |
+| 1 | **오늘의 빨래지수** [`laundry-today/`](./laundry-today) | 우리 동네 날씨로 오늘 빨래·이불 널기·세차 가능 여부 | 기상청 단기예보 | [기획](./laundry-today/PLAN.md) · [README](./laundry-today/README.md) |
 | 2 | **연휴계산기** [`holiday-planner/`](./holiday-planner) | 다음 연휴 D-day, 연차 1~3개로 가장 길게 쉬는 날, 입사일 기준 발생 연차 | 한국천문연구원 특일 정보 | [기획](./holiday-planner/PLAN.md) · [README](./holiday-planner/README.md) |
 
 두 앱 모두 appName(앱인토스 고유 ID)은 아직 미정이고, 폴더 이름이 지금 쓰는 후보예요.

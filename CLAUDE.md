@@ -8,7 +8,7 @@
 
 | 폴더 | 내용 | 앱별 문서 |
 |---|---|---|
-| `laundry-today/` | #1 오늘 빨래해도 될까 — 기상청 단기예보 | `CLAUDE.md` · `PLAN.md` · `README.md` · `PRIVACY_POLICY.md` |
+| `laundry-today/` | #1 오늘의 빨래지수 — 기상청 단기예보 | `CLAUDE.md` · `PLAN.md` · `README.md` · `PRIVACY_POLICY.md` |
 | `holiday-planner/` | #2 연휴계산기 — 한국천문연구원 특일 정보 | `CLAUDE.md` · `PLAN.md` · `README.md` · `PRIVACY_POLICY.md` |
 | `worker/` | Cloudflare Worker 공공데이터 공통 프록시 `public-data-proxy.s82070489.workers.dev`. 경로 `/kma/vilage-fcst`(#1), `/holidays`(#2) | `README.md` |
 
@@ -33,7 +33,7 @@
 - 사용자는 Windows PowerShell 5를 쓴다. 안내 명령은 `&&` 없이 한 줄씩, 환경변수는 `$env:NAME = "값"`, `curl` 대신 `curl.exe`, `cp` 대신 `Copy-Item`
 - Node.js 22.12 이상 (vitest·wrangler 요구 버전)
 - `laundry-today`, `holiday-planner`, `worker`는 각각 따로 `npm install`·`npm test`(vitest). `npm install`이 `edgesOut` 에러로 실패하면 lockfile 기준 `npm ci`
-- 원격 기본 브랜치는 `claude/laundry-weather-planning-7dsczh`이고 `main`이 아직 없다(2026-09-27 기준) — 개인정보처리방침 링크는 `main`에 병합해야 열린다
+- 원격 기본 브랜치는 `claude/laundry-weather-planning-7dsczh`이고 `main`이 아직 없다(2026-09-27 기준) — 그래서 GitHub `main` 기준 개인정보처리방침 링크는 쓰지 않는다(Notion 공개 페이지 예정)
 - 컨테이너의 한글 폰트가 WenQuanYi뿐이라 스크린샷에서 "시"가 "ㅅ|"처럼 벌어져 보인다 — 앱 버그 아님
 - 로컬 `npm run dev`에서 devtools "AIT" 플로팅 버튼이 화면 오른쪽 아래(하단 CTA·하단 탭)를 가린다. 배포본엔 없음
 - UI 확인: `npm run dev` + Playwright(전역 설치됨, `NODE_PATH=$(npm root -g)`)로 Worker 응답을 route로 가짜 응답해 스크린샷

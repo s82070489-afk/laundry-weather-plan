@@ -4,7 +4,7 @@
 
 | 경로 | 앱 | 원본 API | 비밀값 |
 |---|---|---|---|
-| `GET /kma/vilage-fcst?nx=&ny=` | 오늘 빨래해도 될까 (`laundry-today`) | 기상청 단기예보 `getVilageFcst` | `KMA_SERVICE_KEY` |
+| `GET /kma/vilage-fcst?nx=&ny=` | 오늘의 빨래지수 (`laundry-today`) | 기상청 단기예보 `getVilageFcst` | `KMA_SERVICE_KEY` |
 | `GET /holidays?year=` | 연휴계산기 (`holiday-planner`) | 한국천문연구원 특일 정보 `getRestDeInfo` | `HOLIDAY_SERVICE_KEY` |
 
 ```
