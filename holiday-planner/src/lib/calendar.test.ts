@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addDays } from './date';
+import { addDays, isValidDate } from './date';
 import { buildCalendar, findHolidayPeriods, holidayRows, periodsAround } from './calendar';
 import { isSubstituteName, type Holiday } from './holidays';
 import { HOLIDAYS_2026, HOLIDAYS_2027 } from './testFixtures';
@@ -53,6 +53,28 @@ describe('연휴 (주말·공휴일이 이어진 구간 중 공휴일이 1개 �
     });
   });
 
+  it('제헌절(7/17 금)도 API 공휴일 — 7/17~7/19 연휴', () => {
+    expect(around('2026-07-01').next).toEqual({ start: '2026-07-17', end: '2026-07-19', totalDays: 3, holidayNames: ['제헌절'] });
+  });
+
+  it('2027년 설날(토~월) + 대체공휴일(설날) 화요일 → 2/6~2/9 4일', () => {
+    expect(around('2027-01-20', HOLIDAYS_2027, '2027-12-31').next).toEqual({
+      start: '2027-02-06',
+      end: '2027-02-09',
+      totalDays: 4,
+      holidayNames: ['설날', '대체공휴일(설날)'],
+    });
+  });
+
+  it('2027년 제헌절(토) + 대체공휴일(제헌절) 월요일 → 7/17~7/19', () => {
+    expect(around('2027-07-01', HOLIDAYS_2027, '2027-12-31').next).toEqual({
+      start: '2027-07-17',
+      end: '2027-07-19',
+      totalDays: 3,
+      holidayNames: ['제헌절', '대체공휴일(제헌절)'],
+    });
+  });
+
   it('연말에 내년 공휴일이 있으면 해를 넘는 연휴(12/31 이후 신정)', () => {
     const { next } = around('2026-12-28', BOTH_YEARS, '2027-12-31');
     expect(next).toEqual({ start: '2027-01-01', end: '2027-01-03', totalDays: 3, holidayNames: ['신정'] });
@@ -70,6 +92,14 @@ describe('holidayRows (올해 남은 공휴일 목록)', () => {
       { start: '2026-10-05', end: '2026-10-05', name: '대체공휴일(개천절)', substitute: true },
       { start: '2026-10-09', end: '2026-10-09', name: '한글날', substitute: false },
       { start: '2026-12-25', end: '2026-12-25', name: '기독탄신일', substitute: false },
+    ]);
+  });
+
+  it('설날 사흘은 한 줄, 이어지는 대체공휴일(설날)은 배지 붙은 별도 줄 (2027년 2월)', () => {
+    const feb = buildCalendar('2027-02-01', '2027-02-28', HOLIDAYS_2027);
+    expect(holidayRows(feb, '2027-02-01', '2027-02-28')).toEqual([
+      { start: '2027-02-06', end: '2027-02-08', name: '설날', substitute: false },
+      { start: '2027-02-09', end: '2027-02-09', name: '대체공휴일(설날)', substitute: true },
     ]);
   });
 
@@ -98,5 +128,19 @@ describe('holidayRows (올해 남은 공휴일 목록)', () => {
   it('신정은 "1월1일" 대신 "신정"', () => {
     const jan = buildCalendar('2027-01-01', '2027-01-31', HOLIDAYS_2027);
     expect(holidayRows(jan, '2027-01-01', '2027-01-31')).toEqual([{ start: '2027-01-01', end: '2027-01-01', name: '신정', substitute: false }]);
+  });
+});
+
+describe('테스트 공휴일 = 실제 check:api 결과', () => {
+  it('2026년 22건·2027년 24건, 모두 그해의 실제 날짜이고 날짜순', () => {
+    expect(HOLIDAYS_2026).toHaveLength(22);
+    expect(HOLIDAYS_2027).toHaveLength(24);
+    for (const [year, list] of [
+      [2026, HOLIDAYS_2026],
+      [2027, HOLIDAYS_2027],
+    ] as const) {
+      expect(list.every((h) => isValidDate(h.date) && h.date.startsWith(`${year}-`) && h.name !== '')).toBe(true);
+      expect(list.map((h) => h.date)).toEqual(list.map((h) => h.date).sort());
+    }
   });
 });

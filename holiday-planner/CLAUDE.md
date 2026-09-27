@@ -23,6 +23,6 @@
 ## 작업 시 주의
 
 - 실제 API 확인: `npm run check:api` — `HOLIDAY_PROXY_URL`(Worker 경유). 건수·cache·목록과 앱 계산(다음 연휴, 연차 추천 1위)까지 출력
-- 테스트 공휴일은 `src/lib/testFixtures.ts` — 지금은 확인된 API 형식(노동절, "대체공휴일(○○)")만 반영한 임시 데이터. 실제 `check:api` 2026·2027 목록으로 교체 예정
+- 테스트 공휴일은 `src/lib/testFixtures.ts` — 실제 `check:api` 결과(2026-09-27 받음, 2026년 22건·2027년 24건: 노동절·제헌절 포함, 대체공휴일은 "대체공휴일(○○)")
 - `scripts/`는 Node(tsx)로 돌아서 `import.meta.env`를 쓰는 `src/config/app.ts`를 import하면 안 된다 (`src/lib/holidays.ts`처럼 설정 없는 모듈만)
 - UI 확인 시 `/holidays` 응답은 Playwright route로 가짜 응답(`src/lib/testFixtures.ts` 데이터), 날짜는 `page.clock.setFixedTime`으로 12월·4월 등 재현

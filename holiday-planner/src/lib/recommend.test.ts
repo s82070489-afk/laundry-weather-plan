@@ -79,7 +79,7 @@ describe('연말연시', () => {
     expect(run({ today: '2026-12-01', leaveCount: 1 }, ALL).some((r) => r.leaveDates.includes('2026-12-31'))).toBe(false);
   });
 
-  it('내년 공휴일이 있으면 내년 설날 연휴(2/5~2/8)까지 추천 범위', () => {
+  it('내년 공휴일이 있으면 내년 설날 연휴(2/6~2/9)까지 추천 범위', () => {
     const top = run({ today: '2026-12-01', leaveCount: 3, holidays: BOTH_YEARS, nextYearAvailable: true });
     expect(top.some((r) => r.start.startsWith('2027'))).toBe(true);
     expect(planRangeEnd('2026-12-01', true)).toBe('2027-12-31');
@@ -195,11 +195,25 @@ describe('노동절 (API 공휴일)', () => {
   });
 
   it('2027년: 토요일 노동절 + 대체공휴일(노동절) 5/3 + 어린이날 5/5 → 5/4(화) 하루로 5/1~5/5 5일', () => {
-    const may4 = run({ today: '2027-04-20', leaveCount: 1, holidays: BOTH_YEARS, nextYearAvailable: true }, ALL).find(
-      (r) => r.leaveDates[0] === '2027-05-04',
-    )!;
+    const may4 = run({ today: '2027-04-20', leaveCount: 1, holidays: HOLIDAYS_2027 }, ALL).find((r) => r.leaveDates[0] === '2027-05-04')!;
     expect(brief(may4)).toEqual({ start: '2027-05-01', end: '2027-05-05', totalDays: 5, leaveDates: ['2027-05-04'] });
     expect(may4.holidayNames).toEqual(['노동절', '대체공휴일(노동절)', '어린이날']);
+  });
+});
+
+describe('제헌절·2027 설날 (실제 목록)', () => {
+  it('제헌절(7/17 금) 앞뒤 하루로 4일', () => {
+    const all = run({ today: '2026-07-01', leaveCount: 1 }, ALL).map(brief);
+    expect(all).toContainEqual({ start: '2026-07-16', end: '2026-07-19', totalDays: 4, leaveDates: ['2026-07-16'] });
+    expect(all).toContainEqual({ start: '2026-07-17', end: '2026-07-20', totalDays: 4, leaveDates: ['2026-07-20'] });
+  });
+
+  it('2027 설날(토~월) + 대체공휴일(설날) 화요일 뒤 수~금 연차 3개로 2/6~2/14 9일', () => {
+    const r = run({ today: '2027-01-20', leaveCount: 3, holidays: HOLIDAYS_2027 }, ALL).find(
+      (x) => x.leaveDates.join() === '2027-02-10,2027-02-11,2027-02-12',
+    )!;
+    expect(brief(r)).toEqual({ start: '2027-02-06', end: '2027-02-14', totalDays: 9, leaveDates: ['2027-02-10', '2027-02-11', '2027-02-12'] });
+    expect(r.holidayNames).toEqual(['설날', '대체공휴일(설날)']);
   });
 });
 
