@@ -1,6 +1,6 @@
 # 연휴계산기 (holiday-planner)
 
-연차 몇 개로 며칠 쉴 수 있는지 알려주는 앱인토스(토스 미니앱) 비게임 미니앱이에요. 공공데이터 생활정보 시리즈 2번이고, 기획은 [`PLAN.md`](./PLAN.md)를 보세요.
+연차 몇 개로 며칠 쉴 수 있는지 알려주는 앱인토스(토스 미니앱) 비게임 미니앱이에요. 공공데이터 생활정보 시리즈 2번이고, 기획은 [`PLAN.md`](./PLAN.md), 시리즈 공통 규칙은 [루트 README](../README.md)를 보세요.
 
 - 스택: Vite + React 19 + TypeScript, `@apps-in-toss/web-framework` 3.2.0 — "오늘 빨래해도 될까"(`../laundry-today`)와 같은 구조·디자인 토큰(TDS 미사용)·광고 배너·뒤로가기 처리
 - 공휴일은 [`../worker`](../worker) Cloudflare Worker의 `/holidays?year=`로만 받아요. 서비스키는 앱 번들에 들어가지 않아요.
