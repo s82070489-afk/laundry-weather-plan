@@ -4,7 +4,7 @@
 
 | 경로 | 앱 | 원본 API | 비밀값 |
 |---|---|---|---|
-| `GET /kma/vilage-fcst?nx=&ny=` | 오늘의 빨래지수 (`laundry-today`) | 기상청 단기예보 `getVilageFcst` | `KMA_SERVICE_KEY` |
+| `GET /kma/vilage-fcst?nx=&ny=` | 오늘의 빨래지수 (`laundry-index`, 폴더 `laundry-today/`) | 기상청 단기예보 `getVilageFcst` | `KMA_SERVICE_KEY` |
 | `GET /holidays?year=` | 연휴계산기 (`holiday-planner`) | 한국천문연구원 특일 정보 `getRestDeInfo` | `HOLIDAY_SERVICE_KEY` |
 
 ```
@@ -168,7 +168,7 @@ npm run typecheck
 | `src/lib/xml.ts` | 공공데이터포털 XML 응답 → JSON과 같은 모양 (작은 파서) |
 | `wrangler.toml` | KV 바인딩, 로그 설정, `ALLOW_DEV_ORIGINS` |
 
-> appName이 `laundry-today`·`holiday-planner`에서 바뀌면 `allowedOrigins.ts`도 같이 바꿔야 해요.
+> appName(`laundry-index`·`holiday-planner`)이 바뀌면 `allowedOrigins.ts`도 같이 바꿔야 해요.
 
 ## 새 공공데이터 API 추가하기
 

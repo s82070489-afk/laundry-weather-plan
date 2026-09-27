@@ -7,7 +7,7 @@
 - **v1.0은 기상청 단기예보만 사용, 미세먼지(에어코리아)는 v1.1.** 판정 근거 화면에 에어코리아 확인 안내 문구 노출. 감점 규칙은 `src/scoring/rules.ts`에 규칙 하나 추가하는 구조
 - **Worker 경로**: `/kma/vilage-fcst?nx=&ny=`, 비밀값 `KMA_SERVICE_KEY`. 발표시각은 Worker가 계산(앱의 `src/weather/baseTime.ts`와 같은 규칙)
 - **캐싱**: 격자+발표시각 단위. Worker KV에 격자별 마지막 정상 응답 3일 보관, 실패 시 STALE. `totalCount`가 1000을 넘으면 Worker가 다음 페이지까지 받아 합치고, 일부 페이지만 받은 응답은 저장하지 않음. 앱은 localStorage에 격자별로, 같은 발표시각이면 네트워크 호출 없음
-- **appName 확정 `laundry-today`, 한국어 앱 이름 "오늘의 빨래지수"**: `src/config/appName.ts`(appName) + `src/config/app.ts`의 `APP_DISPLAY_NAME` + Worker `allowedOrigins.ts`. 앱인토스 config에는 표시 이름 필드가 없어 콘솔에서 입력
+- **appName 확정 `laundry-index`(콘솔 등록값 — 폴더·패키지 이름 `laundry-today`와 다름), 한국어 앱 이름 "오늘의 빨래지수"**: `src/config/appName.ts`(appName) + `src/config/app.ts`의 `APP_DISPLAY_NAME` + Worker `allowedOrigins.ts`. 앱인토스 config에는 표시 이름 필드가 없어 콘솔에서 입력
 - **판정 수치**는 `src/config/scoring.ts`에만. 하늘 감점 구름많음 -5 / 흐림 -10, 습도 70%+ -20 / 85%+ -45
 - **판정 규칙**: 시각별 100점 감점, PTY≠0 시각 0점. 빨래 = 09~18시 남은 시각의 연속 3h+ 구간 최고 평균, 비 예보 시각이 낀 구간은 제외. 추천 시간대 = 최고 평균 -5점 이내 중 가장 긴 구간. 이불 = 습도 1.5배, 4h+. 세차 = 판정일~2일 뒤 PTY≠0 또는 POP≥60 있으면 비추천(0점). 오늘 남은 낮 시간이 필요 구간(3h/4h)보다 짧으면 비추천이 아니라 "늦었어요"(verdict null, reason `too-late`). 15시(`switchToTomorrowHour`) 이후 홈은 내일 기준
 - **판정 배지**: 좋아요=블루, 괜찮아요=연블루, 아쉬워요=그레이, 비추천=진한 잉크(#191F28)+흰 글씨, 늦었어요/예보 없음=테두리만. 비추천·늦었어요 카드는 점수 숨김

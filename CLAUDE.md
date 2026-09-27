@@ -8,7 +8,7 @@
 
 | 폴더 | 내용 | 앱별 문서 |
 |---|---|---|
-| `laundry-today/` | #1 오늘의 빨래지수 — 기상청 단기예보 | `CLAUDE.md` · `PLAN.md` · `README.md` · `PRIVACY_POLICY.md` |
+| `laundry-today/` | #1 오늘의 빨래지수 (appName `laundry-index` — 폴더 이름과 다름) — 기상청 단기예보 | `CLAUDE.md` · `PLAN.md` · `README.md` · `PRIVACY_POLICY.md` |
 | `holiday-planner/` | #2 연휴계산기 — 한국천문연구원 특일 정보 | `CLAUDE.md` · `PLAN.md` · `README.md` · `PRIVACY_POLICY.md` |
 | `worker/` | Cloudflare Worker 공공데이터 공통 프록시 `public-data-proxy.s82070489.workers.dev`. 경로 `/kma/vilage-fcst`(#1), `/holidays`(#2) | `README.md` |
 

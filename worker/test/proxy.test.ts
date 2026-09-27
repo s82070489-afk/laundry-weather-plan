@@ -195,7 +195,7 @@ describe('handleRoute (kma vilage-fcst)', () => {
 describe('CORS', () => {
   it('앱인토스 호스트 4종 허용, 다른 앱/도메인 거부', () => {
     for (const host of ['web', 'private-web', 'apps', 'private-apps']) {
-      expect(isAllowedOrigin(`https://laundry-today.${host}.tossmini.com`, false)).toBe(true);
+      expect(isAllowedOrigin(`https://laundry-index.${host}.tossmini.com`, false)).toBe(true);
     }
     expect(isAllowedOrigin('https://other-app.web.tossmini.com', false)).toBe(false);
     expect(isAllowedOrigin('https://evil.example.com', true)).toBe(false);
@@ -212,11 +212,11 @@ describe('CORS', () => {
     const denied = await worker.fetch(new Request('https://proxy.test/kma/vilage-fcst?nx=60&ny=127', { headers: { Origin: 'https://evil.example.com' } }), env);
     expect(denied.status).toBe(403);
     const pre = await worker.fetch(
-      new Request('https://proxy.test/kma/vilage-fcst', { method: 'OPTIONS', headers: { Origin: 'https://laundry-today.web.tossmini.com' } }),
+      new Request('https://proxy.test/kma/vilage-fcst', { method: 'OPTIONS', headers: { Origin: 'https://laundry-index.web.tossmini.com' } }),
       env,
     );
     expect(pre.status).toBe(204);
-    expect(pre.headers.get('Access-Control-Allow-Origin')).toBe('https://laundry-today.web.tossmini.com');
+    expect(pre.headers.get('Access-Control-Allow-Origin')).toBe('https://laundry-index.web.tossmini.com');
     const notFound = await worker.fetch(new Request('https://proxy.test/nope', { headers: { Origin: 'http://localhost:5173' } }), env);
     expect(notFound.status).toBe(404);
   });

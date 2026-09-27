@@ -17,7 +17,7 @@ npm run dev              # http://localhost:5173
 |---|---|
 | `npm test` | 판정 로직·발표시각·파싱·캐시·격자 검색 단위 테스트 |
 | `npm run lint` | oxlint |
-| `npm run build` | `tsc -b && vite build && ait build` → `laundry-today.ait` |
+| `npm run build` | `tsc -b && vite build && ait build` → `laundry-index.ait` |
 | `npm run check:api` | 실제 기상청 API로 여러 지역(서울·부산·제주·대전·강릉) 수신·판정 확인 (아래 참고) |
 | `npm run build:grid` | 격자 엑셀 → `src/data/grid.json` 재생성 |
 
@@ -41,7 +41,7 @@ npm run check:api -- "서울 마포 서교" "광주 동구 충장"
 ```
 src/
   config/
-    appName.ts      appName 상수 (확정: laundry-today)
+    appName.ts      appName 상수 (확정: laundry-index)
     app.ts          프록시 주소, 광고 ID, 안내 문구, 개인정보처리방침 URL
     scoring.ts      판정 기준 수치 (튜닝은 이 파일만)
   scoring/
@@ -93,7 +93,7 @@ VITE_USE_LIVE_ADS=true npm run build
 
 ## appName
 
-확정: `laundry-today` (한국어 앱 이름 "오늘의 빨래지수"). `src/config/appName.ts`의 `APP_NAME`을 `apps-in-toss.config.ts`와 저장소 키가 따라가고, Worker의 `../worker/src/config/allowedOrigins.ts`에도 같은 값이 있어요. 한국어 이름은 `src/config/app.ts`의 `APP_DISPLAY_NAME`과 `index.html` 제목에 있어요(앱인토스 config에는 표시 이름 필드가 없어 콘솔에서 입력).
+확정: `laundry-index` (콘솔 등록값, 한국어 앱 이름 "오늘의 빨래지수"). 폴더·npm 패키지 이름 `laundry-today`와 다르니 주의하세요. `src/config/appName.ts`의 `APP_NAME`을 `apps-in-toss.config.ts`와 저장소 키가 따라가고, Worker의 `../worker/src/config/allowedOrigins.ts`에도 같은 값이 있어요. 한국어 이름은 `src/config/app.ts`의 `APP_DISPLAY_NAME`과 `index.html` 제목에 있어요(앱인토스 config에는 표시 이름 필드가 없어 콘솔에서 입력).
 
 ## 개인정보처리방침
 
