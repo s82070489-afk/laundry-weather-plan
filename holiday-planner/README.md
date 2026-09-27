@@ -72,25 +72,25 @@ curl.exe -s -H "Origin: http://localhost:5173" "https://public-data-proxy.s82070
 src/
   config/
     appName.ts      appName 상수 (미정 — 여기 한 곳 + ../worker/src/config/allowedOrigins.ts)
-    planner.ts      추천 설정: 탭 수, 탭당 추천 수, 최소 연휴 일수, 주말 요일, 근로자의날 (튜닝은 이 파일만)
+    planner.ts      추천 설정: 탭 수, 탭당 추천 수, 최소 연휴 일수, 주말 요일 (튜닝은 이 파일만)
     app.ts          프록시 주소, 광고 ID, 안내 문구, 개인정보처리방침·법령 URL, 기기 캐시 시간
   lib/
     date.ts         KST "YYYY-MM-DD" 날짜 유틸 (Date를 직접 비교하지 않음)
-    holidays.ts     Worker 응답 검증·정규화(1건 객체/0건 빈 값도 처리), 대체공휴일 판별, 표기 이름
+    holidays.ts     Worker 응답 검증·정규화(1건 객체/0건 빈 값도 처리), 대체공휴일 판별("대체공휴일"로 시작), 표기 이름
     calendar.ts     쉬는 날 달력, 연휴 구간, 올해 남은 공휴일 목록
     recommend.ts    연차 추천 (순수 함수)
     annualLeave.ts  입사일 기준 발생 연차 (순수 함수)
     holidayApi.ts   프록시 호출 + 기기 캐시 + 실패 시 이전 데이터
   hooks/useHolidays.ts  올해·내년 공휴일 함께 불러오기
-  storage/        근로자의날 설정, 입사일 (localStorage)
-  components/     TabBar, CalendarStrip(미니 캘린더), BannerAd(빨래 앱에서 복사) 등
-  screens/        Home · Recommend(연차 추천) · MyLeave(내 연차) · Settings
+  storage/        입사일 (localStorage)
+  components/     TabBar, CalendarStrip(미니 캘린더), AppFooter(출처·계산 기준·개인정보처리방침), BannerAd(빨래 앱에서 복사) 등
+  screens/        Home · Recommend(연차 추천) · MyLeave(내 연차) — 설정 화면은 없음
 scripts/check-holiday-api.ts
 ```
 
 ## 계산 규칙
 
-**연휴** — 주말·공휴일·(설정 ON이면)근로자의날이 이어진 구간 중 공휴일이 하나 이상 있는 것. 쉬는 근로자의날도 공휴일로 쳐요. 평일 공휴일 하루도 1일짜리 연휴예요. 오늘이 연휴 중이면 "지금 연휴 중, 오늘 포함 N일 남음"과 그다음 연휴를 보여줘요.
+**연휴** — 주말·공휴일이 이어진 구간 중 공휴일이 하나 이상 있는 것. 평일 공휴일 하루도 1일짜리 연휴예요. 오늘이 연휴 중이면 "지금 연휴 중, 오늘 포함 N일 남음"과 그다음 연휴를 보여줘요.
 
 **연차 추천** (`src/lib/recommend.ts`)
 
@@ -105,7 +105,7 @@ scripts/check-holiday-api.ts
 - 개월 계산은 민법 제160조를 따라요: 해당일이 없는 달은 그 달 말일에 기간이 끝나요. 예) 1/31 입사 → 2/28까지 채우면 3/1에 1일 생김, 2/29 입사 → 평년은 3/1이 1년
 - 다음 증가일과 증가 후 개수를 보여주고, 25일이면 더 늘지 않아요
 
-**근로자의날** — 공공데이터에는 휴일로 없어서 설정 토글(기본 ON)로 5/1을 쉬는 날로 넣어요. API가 5/1을 이미 공휴일로 주면 토글과 상관없이 그 이름으로 쉬는 날이에요.
+**공휴일 목록** — API 목록을 그대로 써요. 노동절(5/1)도 API가 공휴일로 주고, 토요일이면 "대체공휴일(노동절)"까지 와서 따로 설정하지 않아요. 대체공휴일은 API 이름("대체공휴일(개천절)") 그대로 보여주고, "대체공휴일"로 시작하면 "대체" 배지를 붙여요. 근무 요일은 주 5일(토·일 휴무) 고정이에요.
 
 **캐시** — Worker가 연도별로 24시간 공유 캐시, 앱은 기기에 6시간(`HOLIDAY_CACHE_HOURS`). 원본이 실패하면 Worker는 마지막 정상 데이터(STALE), 앱은 기기의 이전 데이터를 보여주고 "최신 공휴일 정보를 불러오지 못했어요" 안내를 띄워요. 올해 공휴일을 못 받으면 재시도 버튼을 보여줘요.
 
@@ -126,4 +126,4 @@ Remove-Item Env:VITE_USE_LIVE_ADS
 
 ## 개인정보처리방침
 
-[`PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) — 빨래 앱 방침을 바탕으로 입사일(기기에만 저장)과 공휴일 중계 서버 내용을 반영했어요. 설정 화면 링크는 `src/config/app.ts`의 `PRIVACY_POLICY_URL`이에요. 이 저장소 `main` 브랜치의 파일을 가리켜서 `main`에 병합해야 열려요.
+[`PRIVACY_POLICY.md`](./PRIVACY_POLICY.md) — 빨래 앱 방침을 바탕으로 입사일(기기에만 저장)과 공휴일 중계 서버 내용을 반영했어요. 설정 화면이 없어서 링크는 각 탭 화면 하단에 있고, 주소는 `src/config/app.ts`의 `PRIVACY_POLICY_URL`이에요. 이 저장소 `main` 브랜치의 파일을 가리켜서 `main`에 병합해야 열려요.

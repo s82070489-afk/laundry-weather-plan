@@ -31,7 +31,7 @@ holiday-planner (토스 미니앱) ──year────▶ worker /holidays   
 | 광고 | 배너만. 기본은 테스트 광고 ID이고 `VITE_USE_LIVE_ADS=true`로 빌드할 때만 라이브 ID를 써요. 라이브 ID는 앱마다 콘솔에서 따로 발급해요 |
 | appName | 앱별 `src/config/appName.ts` 한 곳 + `worker/src/config/allowedOrigins.ts`. 등록 후 바꿀 수 없어서 콘솔에서 사용 가능 여부를 확인한 뒤 확정해요 |
 | 튜닝 수치 | 앱별 `src/config/`의 파일 하나에만 둬요 (빨래 `scoring.ts`, 연휴 `planner.ts`) |
-| 개인정보처리방침 | 앱 폴더별 `PRIVACY_POLICY.md` (담당자 Leafory). 앱 설정 화면 링크는 이 저장소 `main` 브랜치 파일이라 `main`에 병합해야 열려요 |
+| 개인정보처리방침 | 앱 폴더별 `PRIVACY_POLICY.md` (담당자 Leafory). 앱 안의 링크는 이 저장소 `main` 브랜치 파일이라 `main`에 병합해야 열려요 |
 
 ## 개발 환경
 

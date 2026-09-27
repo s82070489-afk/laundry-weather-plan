@@ -63,7 +63,7 @@ const AUTH_ERROR_XML = `<OpenAPI_ServiceResponse>
   </cmmMsgHeader>
 </OpenAPI_ServiceResponse>`;
 
-const OCT_2026 = [item(20261003, '개천절'), item(20261005, '대체공휴일'), item(20261009, '한글날')];
+const OCT_2026 = [item(20261003, '개천절'), item(20261005, '대체공휴일(개천절)'), item(20261009, '한글날')];
 const NOW = kst('2026-09-27T10:00');
 const q = (year: string) => new URLSearchParams({ year });
 const fetchReturning = (text: string) => vi.fn(async (_url: string) => new Response(text));
@@ -148,7 +148,7 @@ describe('handleRoute (holidays)', () => {
       year: 2026,
       holidays: [
         { date: '2026-10-03', name: '개천절' },
-        { date: '2026-10-05', name: '대체공휴일' },
+        { date: '2026-10-05', name: '대체공휴일(개천절)' },
         { date: '2026-10-09', name: '한글날' },
       ],
       fetchedAt: NOW.toISOString(),

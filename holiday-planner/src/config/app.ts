@@ -32,6 +32,8 @@ export const BANNER_AD_GROUP_ID =
     : TEST_BANNER_AD_GROUP_ID;
 
 export const HOLIDAY_SOURCE_TEXT = '공휴일 정보 출처: 한국천문연구원 특일 정보(공공데이터포털)';
+/** 근무 요일은 주 5일(토·일 휴무) 고정 — 따로 설정하지 않는다 */
+export const CALC_BASIS_TEXT = '주 5일(토·일 휴무) 기준으로 계산한 참고용 정보예요. 회사 규정과 다를 수 있어요.';
 export const STALE_NOTICE_TEXT = '최신 공휴일 정보를 불러오지 못했어요. 이전에 받은 정보로 보여드려요.';
 export const NEXT_YEAR_PENDING_TEXT = '내년 공휴일은 아직 발표 전이에요';
 export const NEXT_YEAR_FAILED_TEXT = '내년 공휴일 정보를 불러오지 못했어요';

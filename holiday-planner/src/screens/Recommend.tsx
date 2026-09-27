@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
+import AppFooter from '../components/AppFooter';
 import BannerAd from '../components/BannerAd';
 import CalendarStrip, { CalendarStripLegend } from '../components/CalendarStrip';
 import DateRangeText from '../components/DateRangeText';
 import LoadError from '../components/LoadError';
-import SourceNotice from '../components/SourceNotice';
 import StatusNotices from '../components/StatusNotices';
 import { BANNER_AD_GROUP_ID } from '../config/app';
 import { plannerConfig } from '../config/planner';
@@ -15,13 +15,12 @@ import './Recommend.css';
 interface RecommendProps {
   today: string;
   holidays: HolidaysState;
-  laborDayOff: boolean;
   onReload: () => void;
 }
 
 const LEAVE_COUNTS = Array.from({ length: plannerConfig.maxLeaveDays }, (_, i) => i + 1);
 
-export default function Recommend({ today, holidays, laborDayOff, onReload }: RecommendProps) {
+export default function Recommend({ today, holidays, onReload }: RecommendProps) {
   const [leaveCount, setLeaveCount] = useState(1);
 
   return (
@@ -48,13 +47,13 @@ export default function Recommend({ today, holidays, laborDayOff, onReload }: Re
       {holidays.status === 'error' && <LoadError onRetry={onReload} />}
       {holidays.status === 'ready' && (
         <>
-          <RecommendList today={today} holidays={holidays} laborDayOff={laborDayOff} leaveCount={leaveCount} />
+          <RecommendList today={today} holidays={holidays} leaveCount={leaveCount} />
           {/* 광고는 추천 결과 아래 배너 1개만 */}
           <BannerAd adGroupId={BANNER_AD_GROUP_ID} />
         </>
       )}
 
-      <SourceNotice />
+      <AppFooter />
     </main>
   );
 }
@@ -62,12 +61,10 @@ export default function Recommend({ today, holidays, laborDayOff, onReload }: Re
 function RecommendList({
   today,
   holidays,
-  laborDayOff,
   leaveCount,
 }: {
   today: string;
   holidays: Extract<HolidaysState, { status: 'ready' }>;
-  laborDayOff: boolean;
   leaveCount: number;
 }) {
   const { thisYear, nextYear, nextYearStatus, stale } = holidays;
@@ -78,10 +75,9 @@ function RecommendList({
         today,
         holidays: [...thisYear.holidays, ...(nextYear?.holidays ?? [])],
         nextYearAvailable,
-        laborDayOff,
         leaveCount,
       }),
-    [today, thisYear, nextYear, nextYearAvailable, laborDayOff, leaveCount],
+    [today, thisYear, nextYear, nextYearAvailable, leaveCount],
   );
   const rangeEnd = planRangeEnd(today, nextYearAvailable);
 

@@ -14,7 +14,7 @@
  * Worker의 ALLOW_DEV_ORIGINS가 "true"여야 한다 (로컬 Origin으로 호출하기 때문).
  */
 import { plannerConfig } from '../src/config/planner';
-import { buildCalendar, calendarOptions, findHolidayPeriods, periodsAround } from '../src/lib/calendar';
+import { buildCalendar, findHolidayPeriods, periodsAround } from '../src/lib/calendar';
 import { addDays, diffDays, formatRange, todayKst, weekdayLabel, yearOf } from '../src/lib/date';
 import { parseHolidaysResponse, type Holiday } from '../src/lib/holidays';
 import { daysPerLeave, planRangeEnd, recommend } from '../src/lib/recommend';
@@ -100,17 +100,16 @@ for (const year of years) {
   }
 }
 
-// 앱과 같은 계산으로 다음 연휴·연차 추천 1위 미리보기 (근로자의날 기본값 기준)
+// 앱과 같은 계산으로 다음 연휴·연차 추천 1위 미리보기 (공휴일은 위 목록 그대로 — 노동절·대체공휴일 포함)
 const current = loaded.get(thisYear);
 if (current?.length) {
   const next = loaded.get(thisYear + 1) ?? [];
   const nextYearAvailable = next.length > 0;
   const holidays = [...current, ...next];
-  const laborDayOff = plannerConfig.laborDay.defaultOn;
-  const days = buildCalendar(addDays(today, -14), planRangeEnd(today, nextYearAvailable), holidays, calendarOptions(plannerConfig, laborDayOff));
+  const days = buildCalendar(addDays(today, -14), planRangeEnd(today, nextYearAvailable), holidays);
   const { current: ongoing, next: upcoming } = periodsAround(findHolidayPeriods(days), today);
 
-  console.log(`\n앱 계산 미리보기 (근로자의날 ${laborDayOff ? '쉼' : '근무'}, 추천 범위 ~${planRangeEnd(today, nextYearAvailable)})`);
+  console.log(`\n앱 계산 미리보기 (주 5일 기준, 추천 범위 ~${planRangeEnd(today, nextYearAvailable)})`);
   if (ongoing) console.log(`  지금 연휴 중: ${formatRange(ongoing.start, ongoing.end, thisYear)} ${ongoing.totalDays}일`);
   if (upcoming) {
     console.log(
@@ -118,7 +117,7 @@ if (current?.length) {
     );
   }
   for (let leaveCount = 1; leaveCount <= plannerConfig.maxLeaveDays; leaveCount++) {
-    const [best] = recommend({ today, holidays, nextYearAvailable, laborDayOff, leaveCount });
+    const [best] = recommend({ today, holidays, nextYearAvailable, leaveCount });
     const text = best
       ? `${formatRange(best.start, best.end, thisYear)} ${best.totalDays}일 연속 (연차 ${best.leaveDates.join(', ')} · 1개당 ${daysPerLeave(best)}일)`
       : '없음';

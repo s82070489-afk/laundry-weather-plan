@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import AppFooter from '../components/AppFooter';
 import { ANNUAL_LEAVE_NOTICE_TEXT, LABOR_LAW_ARTICLE_60_URL } from '../config/app';
 import { calculateAnnualLeave, MAX_ANNUAL_LEAVE, type AnnualLeave } from '../lib/annualLeave';
 import { formatYmd, isValidDate } from '../lib/date';
@@ -48,6 +49,8 @@ export default function MyLeave({ today }: { today: string }) {
           근로기준법 제60조 보기 ›
         </button>
       </section>
+
+      <AppFooter holidaySource={false} />
     </main>
   );
 }

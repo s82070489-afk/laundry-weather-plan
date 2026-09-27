@@ -41,9 +41,9 @@ export function parseHolidaysResponse(json: unknown, year: number): HolidayYear 
   return { year, holidays, fetchedAt: typeof body.fetchedAt === 'string' ? body.fetchedAt : '', cache };
 }
 
-/** API 이름이 "대체공휴일"(또는 "대체공휴일(○○)")이면 대체공휴일 */
+/** API는 대체공휴일 이름을 "대체공휴일(개천절)"처럼 준다 — "대체공휴일"로 시작하면 대체공휴일(배지 표시) */
 export function isSubstituteName(name: string): boolean {
-  return name.includes('대체');
+  return name.startsWith('대체공휴일');
 }
 
 /** 화면 표기용 이름: API는 신정을 "1월1일"로 준다 */

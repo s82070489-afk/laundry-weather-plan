@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { plannerConfig } from '../config/planner';
-import { buildCalendar, calendarOptions } from './calendar';
+import { buildCalendar } from './calendar';
 import {
   compareRecommendations,
   daysPerLeave,
@@ -18,7 +18,7 @@ const BOTH_YEARS = [...HOLIDAYS_2026, ...HOLIDAYS_2027];
 const ALL = { ...plannerConfig, resultsPerTab: 1000 };
 
 function run(input: Partial<RecommendInput> & Pick<RecommendInput, 'today' | 'leaveCount'>, config = plannerConfig) {
-  return recommend({ holidays: HOLIDAYS_2026, nextYearAvailable: false, laborDayOff: true, ...input }, config);
+  return recommend({ holidays: HOLIDAYS_2026, nextYearAvailable: false, ...input }, config);
 }
 
 const brief = (r: Recommendation) => ({ start: r.start, end: r.end, totalDays: r.totalDays, leaveDates: r.leaveDates });
@@ -41,7 +41,7 @@ describe('추석 연휴 끼인 구간', () => {
     ]);
     expect(top[0].holidayCount).toBe(3);
     expect(top[0].holidayNames).toEqual(['추석']);
-    expect(top[1].holidayNames).toEqual(['개천절', '대체공휴일', '한글날']);
+    expect(top[1].holidayNames).toEqual(['개천절', '대체공휴일(개천절)', '한글날']);
     expect(daysPerLeave(top[0])).toBe('3');
   });
 
@@ -110,7 +110,7 @@ describe('공휴일이 주말과 겹치는 경우', () => {
   });
 
   it('주말이면서 공휴일인 날은 하루로 센다', () => {
-    const [sat] = buildCalendar('2026-06-06', '2026-06-06', HOLIDAYS_2026, calendarOptions(plannerConfig, true));
+    const [sat] = buildCalendar('2026-06-06', '2026-06-06', HOLIDAYS_2026);
     expect(sat).toMatchObject({ weekend: true, holiday: true, off: true, holidayNames: ['현충일'] });
     // 6/3(수 선거일) + 6/4·6/5 연차 + 6/6(토 현충일) + 6/7(일) = 5일, 공휴일 2개
     const june = run({ today: '2026-05-26', leaveCount: 2 }, ALL).find((r) => r.leaveDates.join() === '2026-06-04,2026-06-05')!;
@@ -161,7 +161,7 @@ describe('걸러내기·중복 제거', () => {
   });
 
   it('dedupeByLeaveDates: 날짜 집합이 같으면(순서 무관) 처음 것만', () => {
-    const days = buildCalendar('2026-10-01', '2026-10-12', HOLIDAYS_2026, calendarOptions(plannerConfig, true));
+    const days = buildCalendar('2026-10-01', '2026-10-12', HOLIDAYS_2026);
     const [a] = findLeaveWindows(days, 2);
     const reversed = { ...a, start: '2026-10-02', leaveDates: [...a.leaveDates].reverse() };
     expect(dedupeByLeaveDates([a, reversed, a])).toEqual([a]);
@@ -174,27 +174,32 @@ describe('걸러내기·중복 제거', () => {
   });
 });
 
-describe('근로자의날 토글', () => {
-  it('ON이면 5/1(금)이 쉬는 날 → 5/4(월) 하루로 5/1~5/5 5일, OFF면 그 구간이 없다', () => {
-    const on = run({ today: '2026-04-20', leaveCount: 1, laborDayOff: true }, ALL);
-    const off = run({ today: '2026-04-20', leaveCount: 1, laborDayOff: false }, ALL);
-    const may4 = (list: Recommendation[]) => list.find((r) => r.leaveDates[0] === '2026-05-04');
-    expect(brief(may4(on)!)).toEqual({ start: '2026-05-01', end: '2026-05-05', totalDays: 5, leaveDates: ['2026-05-04'] });
-    expect(may4(on)!.holidayNames).toEqual(['근로자의날', '어린이날']);
-    expect(brief(may4(off)!)).toEqual({ start: '2026-05-02', end: '2026-05-05', totalDays: 4, leaveDates: ['2026-05-04'] });
+describe('노동절 (API 공휴일)', () => {
+  it('5/1(금) 노동절 덕분에 5/4(월) 하루로 5/1~5/5 5일', () => {
+    const may4 = run({ today: '2026-04-20', leaveCount: 1 }, ALL).find((r) => r.leaveDates[0] === '2026-05-04')!;
+    expect(brief(may4)).toEqual({ start: '2026-05-01', end: '2026-05-05', totalDays: 5, leaveDates: ['2026-05-04'] });
+    expect(may4.holidayNames).toEqual(['노동절', '어린이날']);
+    expect(run({ today: '2026-04-20', leaveCount: 1 }).map((r) => r.leaveDates.join())).toContain('2026-05-04');
   });
 
-  it('OFF면 5/1은 근무일이라 연차 쓸 날이 될 수 있다', () => {
-    const on = run({ today: '2026-04-20', leaveCount: 2, laborDayOff: true }, ALL);
-    const off = run({ today: '2026-04-20', leaveCount: 2, laborDayOff: false }, ALL);
-    expect(on.some((r) => r.leaveDates.includes('2026-05-01'))).toBe(false);
-    expect(off.some((r) => r.leaveDates.includes('2026-05-01'))).toBe(true);
+  it('노동절은 연차 쓸 날이 되지 않는다', () => {
+    for (const leaveCount of [1, 2, 3]) {
+      expect(run({ today: '2026-04-20', leaveCount }, ALL).some((r) => r.leaveDates.includes('2026-05-01'))).toBe(false);
+    }
   });
 
-  it('상위 추천 목록 자체가 달라진다', () => {
-    const top = (laborDayOff: boolean) => run({ today: '2026-04-20', leaveCount: 1, laborDayOff }).map((r) => r.leaveDates.join());
-    expect(top(true)).toContain('2026-05-04');
-    expect(top(false)).not.toContain('2026-05-04');
+  it('API 목록만 따른다 — 노동절이 빠진 목록이면 5/1은 근무일', () => {
+    const withoutMayDay = HOLIDAYS_2026.filter((h) => h.name !== '노동절');
+    const may4 = run({ today: '2026-04-20', leaveCount: 1, holidays: withoutMayDay }, ALL).find((r) => r.leaveDates[0] === '2026-05-04')!;
+    expect(brief(may4)).toEqual({ start: '2026-05-02', end: '2026-05-05', totalDays: 4, leaveDates: ['2026-05-04'] });
+  });
+
+  it('2027년: 토요일 노동절 + 대체공휴일(노동절) 5/3 + 어린이날 5/5 → 5/4(화) 하루로 5/1~5/5 5일', () => {
+    const may4 = run({ today: '2027-04-20', leaveCount: 1, holidays: BOTH_YEARS, nextYearAvailable: true }, ALL).find(
+      (r) => r.leaveDates[0] === '2027-05-04',
+    )!;
+    expect(brief(may4)).toEqual({ start: '2027-05-01', end: '2027-05-05', totalDays: 5, leaveDates: ['2027-05-04'] });
+    expect(may4.holidayNames).toEqual(['노동절', '대체공휴일(노동절)', '어린이날']);
   });
 });
 

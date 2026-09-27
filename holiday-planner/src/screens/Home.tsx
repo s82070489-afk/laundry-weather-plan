@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
+import AppFooter from '../components/AppFooter';
 import DateRangeText from '../components/DateRangeText';
 import LoadError from '../components/LoadError';
-import SourceNotice from '../components/SourceNotice';
 import StatusNotices from '../components/StatusNotices';
-import { plannerConfig } from '../config/planner';
 import type { HolidaysState } from '../hooks/useHolidays';
 import {
   buildCalendar,
-  calendarOptions,
   findHolidayPeriods,
   holidayRows,
   periodsAround,
@@ -21,53 +19,35 @@ import './Home.css';
 interface HomeProps {
   today: string;
   holidays: HolidaysState;
-  laborDayOff: boolean;
   onReload: () => void;
-  onOpenSettings: () => void;
 }
 
-export default function Home({ today, holidays, laborDayOff, onReload, onOpenSettings }: HomeProps) {
+export default function Home({ today, holidays, onReload }: HomeProps) {
   return (
     <main className="screen home-screen">
       <header className="home-header">
         <p className="home-today">오늘 {formatMonthDay(today)}</p>
-        <button type="button" className="icon-button" aria-label="설정" onClick={onOpenSettings}>
-          <GearIcon />
-        </button>
       </header>
 
       {holidays.status === 'loading' && <p className="status-text">공휴일 정보를 불러오는 중이에요...</p>}
       {holidays.status === 'error' && <LoadError onRetry={onReload} />}
-      {holidays.status === 'ready' && <HomeContent today={today} holidays={holidays} laborDayOff={laborDayOff} />}
+      {holidays.status === 'ready' && <HomeContent today={today} holidays={holidays} />}
 
-      <SourceNotice />
+      <AppFooter />
     </main>
   );
 }
 
-function HomeContent({
-  today,
-  holidays,
-  laborDayOff,
-}: {
-  today: string;
-  holidays: Extract<HolidaysState, { status: 'ready' }>;
-  laborDayOff: boolean;
-}) {
+function HomeContent({ today, holidays }: { today: string; holidays: Extract<HolidaysState, { status: 'ready' }> }) {
   const { thisYear, nextYear, nextYearStatus, stale } = holidays;
   const yearEnd = `${yearOf(today)}-12-31`;
 
   const { current, next, rows } = useMemo(() => {
     const all = [...thisYear.holidays, ...(nextYear?.holidays ?? [])];
-    // 오늘이 연휴 중이면 시작일을 찾고, 대체공휴일의 원래 공휴일도 찾을 수 있게 2주 앞부터
-    const days = buildCalendar(
-      addDays(today, -14),
-      planRangeEnd(today, nextYearStatus === 'available'),
-      all,
-      calendarOptions(plannerConfig, laborDayOff),
-    );
+    // 오늘이 연휴 중이면 그 연휴의 시작일을 찾을 수 있게 2주 앞부터
+    const days = buildCalendar(addDays(today, -14), planRangeEnd(today, nextYearStatus === 'available'), all);
     return { ...periodsAround(findHolidayPeriods(days), today), rows: holidayRows(days, today, yearEnd) };
-  }, [thisYear, nextYear, nextYearStatus, laborDayOff, today, yearEnd]);
+  }, [thisYear, nextYear, nextYearStatus, today, yearEnd]);
 
   return (
     <>
@@ -103,8 +83,8 @@ function HomeContent({
               <li key={row.start} className="holiday-row">
                 <span className="holiday-row-date">{formatRowDate(row)}</span>
                 <span className="holiday-row-name">
-                  {row.name && <span>{row.name}</span>}
-                  {row.substitute && <span className="badge">대체공휴일</span>}
+                  <span>{row.name}</span>
+                  {row.substitute && <span className="badge">대체</span>}
                 </span>
                 <span className="holiday-row-dday">{ddayLabel(diffDays(today, row.start))}</span>
               </li>
@@ -186,17 +166,4 @@ function formatRowDate(row: HolidayRow): string {
   if (row.start === row.end) return formatMonthDay(row.start);
   const sameMonth = row.start.slice(0, 7) === row.end.slice(0, 7);
   return `${formatMonthDay(row.start)} ~ ${sameMonth ? `${parts(row.end).d}일(${weekdayLabel(row.end)})` : formatMonthDay(row.end)}`;
-}
-
-function GearIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#8B95A1" strokeWidth="1.8" />
-      <path
-        d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"
-        stroke="#8B95A1"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
 }

@@ -1,5 +1,5 @@
 import { plannerConfig, type PlannerConfig } from '../config/planner';
-import { buildCalendar, calendarOptions, uniqueHolidayNames, type DayInfo } from './calendar';
+import { buildCalendar, uniqueHolidayNames, type DayInfo } from './calendar';
 import { addDays, yearOf } from './date';
 import type { Holiday } from './holidays';
 
@@ -10,8 +10,6 @@ export interface RecommendInput {
   holidays: readonly Holiday[];
   /** 내년 공휴일이 발표돼 있으면 내년 12/31까지, 아니면 올해 12/31까지만 본다 (주말만으로 계산하지 않음) */
   nextYearAvailable: boolean;
-  /** 근로자의날에 쉬는지 (설정 토글) */
-  laborDayOff: boolean;
   /** 쓸 연차 개수 (탭) */
   leaveCount: number;
 }
@@ -23,7 +21,7 @@ export interface Recommendation {
   totalDays: number;
   /** 연차 쓸 날 = 구간 안의 근무일 */
   leaveDates: string[];
-  /** 구간 안 공휴일(쉬는 근로자의날 포함) 날짜 수 */
+  /** 구간 안 공휴일 날짜 수 (주말과 겹친 공휴일도 1) */
   holidayCount: number;
   /** 구간 안 공휴일 이름 (표기용) */
   holidayNames: string[];
@@ -91,12 +89,12 @@ export function compareRecommendations(a: Recommendation, b: Recommendation): nu
  *   4) 연차 쓸 날짜 집합 중복 제거 → 정렬 → 상위 resultsPerTab개
  */
 export function recommend(input: RecommendInput, config: PlannerConfig = plannerConfig): Recommendation[] {
-  const { today, holidays, nextYearAvailable, laborDayOff, leaveCount } = input;
+  const { today, holidays, nextYearAvailable, leaveCount } = input;
   const from = addDays(today, 1);
   const to = planRangeEnd(today, nextYearAvailable);
   if (from > to) return [];
 
-  const days = buildCalendar(from, to, holidays, calendarOptions(config, laborDayOff));
+  const days = buildCalendar(from, to, holidays, config.weekendDays);
   const candidates = findLeaveWindows(days, leaveCount).filter(
     (r) => r.totalDays >= config.minTotalDays && r.leaveDates.every((d) => d > today) && r.totalDays > r.leaveDates.length,
   );

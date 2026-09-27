@@ -21,10 +21,10 @@
 - **appName**: 앱별 `src/config/appName.ts` 한 곳(`apps-in-toss.config.ts`·localStorage 키 prefix가 참조, config 로더에서도 읽혀 Vite 전용 문법 금지) + Worker `APP_NAMES`. 등록 후 수정 불가라 콘솔에서 확인 후 확정
 - **스택·구조**: Vite + React 19 + TS, `@apps-in-toss/web-framework` 3.2.0, vitest, oxlint. 튜닝 수치는 앱별 `src/config/` 파일 하나에만, 판단 로직은 순수 함수 + 테스트. 공통 코드는 패키지로 빼지 않고 복사해서 쓴다(`BannerAd` + `useTossAdsReady`, `openExternal`, 설정 파일)
 - **디자인**: TDS 미사용, 배출일 앱 토큰(블루 단일 액센트 `#3182F6`, 화이트 카드 + 1px 보더 `#F2F4F6`, 잉크 `#191F28`)
-- **뒤로가기 버튼을 직접 그리지 않음** (배출일 앱 심사 반려 사례). `graniteEvent backEvent` + `Screen.close()` + history 동기화. 최상위 화면에서만 `Screen.close()`
+- **뒤로가기 버튼을 직접 그리지 않음** (배출일 앱 심사 반려 사례). `graniteEvent backEvent`로 받아 최상위 화면에서만 `Screen.close()`, 하위 화면(push)이 있는 앱은 history 동기화
 - **날짜·시각은 KST**: 기기 시간대와 무관하게 UTC+9로 계산 (#1 `src/weather/kst.ts`, #2 `src/lib/date.ts`)
 - **광고**: 배너만. 기본 테스트 ID(`ait-ad-test-banner-id`), `VITE_USE_LIVE_ADS=true`일 때만 라이브 ID. 라이브 adGroupId는 앱마다 콘솔에서 따로 발급(다른 앱 ID 재사용 금지) — 아직 둘 다 없음(각 앱 `src/config/app.ts`)
-- **개인정보처리방침**: 앱 폴더별 `PRIVACY_POLICY.md`, 담당자 Leafory. 앱 설정 화면 링크는 이 저장소 `main` 브랜치 파일
+- **개인정보처리방침**: 앱 폴더별 `PRIVACY_POLICY.md`, 담당자 Leafory. 앱 안 링크(빨래: 설정 화면, 연휴: 화면 하단)는 이 저장소 `main` 브랜치 파일
 - **문서**: 앱마다 `PLAN.md`(기획 + 변경 이력), `README.md`(실행·배포), `PRIVACY_POLICY.md`, `CLAUDE.md`(앱별 결정). 결정이 바뀌면 그 앱의 `PLAN.md` 변경 이력과 `CLAUDE.md`를 함께 고치고, 공통 규칙이 바뀌면 이 파일과 루트 `README.md`를 고친다
 
 ## 작업 시 주의
