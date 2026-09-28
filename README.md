@@ -28,7 +28,7 @@ holiday-planner (토스 미니앱) ──year────▶ worker /holidays   
 | 디자인 | 토스 디자인 언어 — 블루 단일 액센트(`#3182F6`), 화이트 카드 + 1px 보더, 잉크 `#191F28`. 토큰은 각 앱 `src/index.css` |
 | 뒤로가기 | 앱이 뒤로가기 버튼을 그리지 않아요(이전 앱 심사 반려 사례). 토스 내비게이션 바의 뒤로가기를 받아(`graniteEvent backEvent`) 화면을 되돌리고, 첫 화면이면 미니앱을 닫아요 |
 | 날짜·시각 | 기기 시간대와 무관하게 한국 시간(KST)으로 계산해요 |
-| 광고 | 배너만. 기본은 테스트 광고 ID이고 `VITE_USE_LIVE_ADS=true`로 빌드할 때만 라이브 ID를 써요. 라이브 ID는 앱마다 콘솔에서 따로 발급해요 |
+| 광고 | 배너만. 라이브 ID는 앱마다 콘솔에서 따로 발급해요. 출시 번들에 테스트 광고 ID가 있으면 심사에서 반려돼요 — 빨래 앱은 빌드가 항상 라이브 ID이고 테스트 ID는 개발 서버에서만 써요(빌드 중 검사). 연휴계산기는 아직 `VITE_USE_LIVE_ADS` 방식이라 제출 전에 같은 방식으로 바꿔야 해요 |
 | appName | 앱별 `src/config/appName.ts` 한 곳 + `worker/src/config/allowedOrigins.ts`. 등록 후 바꿀 수 없어서 콘솔에서 사용 가능 여부를 확인한 뒤 확정해요 |
 | 튜닝 수치 | 앱별 `src/config/`의 파일 하나에만 둬요 (빨래 `scoring.ts`, 연휴 `planner.ts`) |
 | 개인정보처리방침 | 앱 폴더별 `PRIVACY_POLICY.md` (담당자 Leafory). 앱 안의 링크는 이 저장소 `main` 브랜치 파일이라 `main`에 병합해야 열려요 |
