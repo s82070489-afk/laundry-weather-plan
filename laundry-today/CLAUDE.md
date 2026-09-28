@@ -13,7 +13,7 @@
 - **판정 배지**: 좋아요=블루, 괜찮아요=연블루, 아쉬워요=그레이, 비추천=진한 잉크(#191F28)+흰 글씨, 늦었어요/예보 없음=테두리만. 비추천·늦었어요 카드는 점수 숨김
 - **홈 판정 이유 한 줄**: `src/scoring/reason.ts`. 판정 시간대에 비가 있으면 "○○ 오전/오후/저녁에 비 소식", 아니면 추천 구간 감점 합이 가장 큰 요소(좋아요·괜찮아요는 부드러운 문장, 100점이면 긍정 문장). "기상청 예보 기반 참고 정보예요"는 하단 출처 줄에만. 미리보기의 세차 비추천은 시간대 자리에 `shortReason`("이틀 안에 비 소식"/"당일 비 소식"), 세차 상세는 "글피 새벽에 비 소식이 있어요"처럼 상대 날짜+새벽/오전/오후/저녁
 - **화면**: 동네 설정(온보딩) → 홈 → 상세·설정. 동네는 앱에 내장한 기상청 격자 매핑표(`src/data/grid.json`)에서 검색, 매핑이 안 되는 동은 같은 시/군/구 대표 격자
-- **광고 위치**: 홈 하단 배너. 라이브 ID는 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID` = `ait.v2.live.955d97e13e9846a0`(2026-09-28 발급). 운영 빌드(`VITE_USE_LIVE_ADS=true`)인데 비어 있으면 광고 영역을 렌더링하지 않음(`resolveBannerAdGroupId`)
+- **광고 위치**: 홈 하단 배너. 라이브 ID는 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID` = `ait.v2.live.955d97e13e9846a0`(2026-09-28 발급). **`npm run build` 결과물은 항상 라이브 ID, 테스트 ID(`ait-ad-test-banner-id`)는 `import.meta.env.DEV` 분기 안에만 직접 적어 빌드에서 제거**(심사 반려: "출시 번들에 테스트용 광고 그룹 ID 불가"). `VITE_USE_LIVE_ADS` 없음. 빌드 중 `scripts/check-bundle-ads.mjs`가 dist에 테스트 ID가 있거나 라이브 ID가 없으면 `.ait` 만들기 전에 실패시킴. 테스트 ID를 상수·함수로 빼서 DEV 분기 밖에서 참조하지 말 것(번들에 남음)
 - **개인정보처리방침**: 원문 `PRIVACY_POLICY.md`. 링크는 `src/config/app.ts`의 `PRIVACY_POLICY_URL`(Notion 페이지 예정, 비어 있음). 비어 있으면 설정 화면의 "정보" 영역을 숨김
 
 ## 작업 시 주의

@@ -17,7 +17,8 @@ npm run dev              # http://localhost:5173
 |---|---|
 | `npm test` | 판정 로직·발표시각·파싱·캐시·격자 검색 단위 테스트 |
 | `npm run lint` | oxlint |
-| `npm run build` | `tsc -b && vite build && ait build` → `laundry-index.ait` |
+| `npm run build` | `tsc -b && vite build && check:ads && ait build` → `laundry-index.ait` (라이브 광고 ID, 테스트 ID가 남아 있으면 실패) |
+| `npm run check:ads` | `dist`에 테스트 광고 ID가 없고 라이브 광고 ID가 있는지 검사 |
 | `npm run check:api` | 실제 기상청 API로 여러 지역(서울·부산·제주·대전·강릉) 수신·판정 확인 (아래 참고) |
 | `npm run build:grid` | 격자 엑셀 → `src/data/grid.json` 재생성 |
 
@@ -57,6 +58,7 @@ src/
 scripts/
   build-grid.py     격자 엑셀 → JSON
   check-weather-api.ts
+  check-bundle-ads.mjs  빌드 결과물 광고 ID 검사
 data-src/kma-grid-2607.xlsx  기상청 활용가이드 격자_위경도 원본
 ```
 
@@ -85,11 +87,15 @@ python3 scripts/build-grid.py data-src/<새파일>.xlsx
 
 ## 광고 ID
 
-기본값은 항상 테스트 광고 ID(`ait-ad-test-banner-id`)예요. 이 앱 콘솔에서 배너 광고 그룹을 만든 뒤 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID`에 넣어 뒀어요(`ait.v2.live.955d97e13e9846a0`). **스토어 배포용 최종 빌드에서만** 다음을 실행하세요. 라이브 ID가 비어 있는 채로 운영 빌드를 하면 광고 영역이 아예 나오지 않아요(테스트 ID로 대체하지 않음).
+| 실행 | 광고 ID |
+|---|---|
+| `npm run dev` (개발 서버) | 테스트 광고 ID `ait-ad-test-banner-id` |
+| `npm run build` (dist, `.ait`) | 항상 라이브 광고 ID — `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID` (`ait.v2.live.955d97e13e9846a0`) |
 
-```bash
-VITE_USE_LIVE_ADS=true npm run build
-```
+- 앱인토스 심사에서 "출시 번들에 테스트용 광고 그룹 ID를 넣을 수 없음"으로 반려된 적이 있어요(2026-09-28). 그래서 테스트 ID 문자열은 `import.meta.env.DEV` 분기 안에만 적어 두고, 빌드 때 그 분기가 통째로 제거되게 했어요. 환경변수로 고르지 않아요(`VITE_USE_LIVE_ADS` 없음).
+- `npm run build`는 `vite build` 직후 `scripts/check-bundle-ads.mjs`로 `dist`를 검사해요. 테스트 ID가 하나라도 있거나 라이브 ID가 없으면 `.ait`를 만들기 전에 실패해요.
+- 라이브 ID를 비우면 빌드 결과물에서 광고 영역이 나오지 않지만, 검사 스크립트가 실패시켜서 그대로 제출되지 않아요.
+- 빌드한 `.ait`를 QR로 테스트하면 실제 광고가 나와요. 광고를 누르지 말고 확인만 하세요. 광고 동작 확인은 `npm run dev`에서 해요.
 
 ## appName
 

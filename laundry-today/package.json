@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && ait build",
+    "build": "tsc -b && vite build && node scripts/check-bundle-ads.mjs && ait build",
+    "check:ads": "node scripts/check-bundle-ads.mjs",
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview",
