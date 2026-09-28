@@ -13,10 +13,10 @@ export const PRIVACY_POLICY_URL = '';
 export const WEATHER_PROXY_URL = (import.meta.env.VITE_WEATHER_PROXY_URL ?? '').replace(/\/$/, '');
 
 /**
- * 라이브 배너 광고 그룹 ID — 이 앱 콘솔에서 발급받아 채운다(배출일 앱 ID 재사용 금지).
- * TODO: 광고 ID 발급 후 입력. 비어 있으면 운영 빌드에서 광고 영역을 아예 렌더링하지 않는다.
+ * 라이브 배너 광고 그룹 ID — 이 앱(laundry-index) 콘솔에서 발급받은 값(배출일 앱 ID 재사용 금지).
+ * 운영 빌드(VITE_USE_LIVE_ADS=true)에서만 쓰인다. 비우면 운영 빌드에서 광고 영역을 렌더링하지 않는다.
  */
-export const LIVE_BANNER_AD_GROUP_ID = '';
+export const LIVE_BANNER_AD_GROUP_ID = 'ait.v2.live.955d97e13e9846a0';
 
 /** 개발·QR 테스트용 공식 테스트 광고 ID (실 광고 ID로 테스트하면 정책 위반) */
 export const TEST_BANNER_AD_GROUP_ID = 'ait-ad-test-banner-id';

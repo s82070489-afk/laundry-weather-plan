@@ -85,7 +85,7 @@ python3 scripts/build-grid.py data-src/<새파일>.xlsx
 
 ## 광고 ID
 
-기본값은 항상 테스트 광고 ID(`ait-ad-test-banner-id`)예요. 이 앱 콘솔에서 배너 광고 그룹을 만든 뒤 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID`를 채우고(지금은 발급 대기라 비어 있음), **스토어 배포용 최종 빌드에서만** 다음을 실행하세요. 라이브 ID가 비어 있는 채로 운영 빌드를 하면 광고 영역이 아예 나오지 않아요(테스트 ID로 대체하지 않음).
+기본값은 항상 테스트 광고 ID(`ait-ad-test-banner-id`)예요. 이 앱 콘솔에서 배너 광고 그룹을 만든 뒤 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID`에 넣어 뒀어요(`ait.v2.live.955d97e13e9846a0`). **스토어 배포용 최종 빌드에서만** 다음을 실행하세요. 라이브 ID가 비어 있는 채로 운영 빌드를 하면 광고 영역이 아예 나오지 않아요(테스트 ID로 대체하지 않음).
 
 ```bash
 VITE_USE_LIVE_ADS=true npm run build

@@ -23,7 +23,7 @@
 - **디자인**: TDS 미사용, 배출일 앱 토큰(블루 단일 액센트 `#3182F6`, 화이트 카드 + 1px 보더 `#F2F4F6`, 잉크 `#191F28`)
 - **뒤로가기 버튼을 직접 그리지 않음** (배출일 앱 심사 반려 사례). `graniteEvent backEvent`로 받아 최상위 화면에서만 `Screen.close()`, 하위 화면(push)이 있는 앱은 history 동기화
 - **날짜·시각은 KST**: 기기 시간대와 무관하게 UTC+9로 계산 (#1 `src/weather/kst.ts`, #2 `src/lib/date.ts`)
-- **광고**: 배너만. 기본 테스트 ID(`ait-ad-test-banner-id`), `VITE_USE_LIVE_ADS=true`일 때만 라이브 ID. 라이브 adGroupId는 앱마다 콘솔에서 따로 발급(다른 앱 ID 재사용 금지) — 아직 둘 다 없음(각 앱 `src/config/app.ts`)
+- **광고**: 배너만. 기본 테스트 ID(`ait-ad-test-banner-id`), `VITE_USE_LIVE_ADS=true`일 때만 라이브 ID. 라이브 adGroupId는 앱마다 콘솔에서 따로 발급(다른 앱 ID 재사용 금지) — 빨래 앱은 발급 완료, 연휴계산기는 아직 없음(각 앱 `src/config/app.ts`의 `LIVE_BANNER_AD_GROUP_ID`)
 - **개인정보처리방침**: 앱 폴더별 `PRIVACY_POLICY.md`, 담당자 Leafory. 앱 안 링크(빨래: 설정 화면, 연휴: 화면 하단)는 이 저장소 `main` 브랜치 파일
 - **문서**: 앱마다 `PLAN.md`(기획 + 변경 이력), `README.md`(실행·배포), `PRIVACY_POLICY.md`, `CLAUDE.md`(앱별 결정). 결정이 바뀌면 그 앱의 `PLAN.md` 변경 이력과 `CLAUDE.md`를 함께 고치고, 공통 규칙이 바뀌면 이 파일과 루트 `README.md`를 고친다
 
