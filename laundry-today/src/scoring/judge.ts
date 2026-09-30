@@ -59,6 +59,11 @@ export interface Judgement {
   reason?: JudgeReason;
   /** 세차 rain-soon일 때 처음 비 예보가 있는 시각 */
   rainAt?: { date: string; hour: number };
+  /**
+   * 세차: 예보가 확인 기간(판정일~N일 뒤) 끝까지 오지 않았으면 실제로 확인한 마지막 시각.
+   * 예) 14시 발표는 글피 08시까지만 있어서 "글피 오전까지 비 소식 없음"으로만 말할 수 있다
+   */
+  checkedUntil?: { date: string; hour: number };
 }
 
 /** 판정 기준 시각 (KST) */
@@ -152,9 +157,11 @@ function judgeDrying(
   if (!hasAnyForDate) return { ...base, verdict: null, score: null, window: null, reason: 'no-data' };
 
   const w = bestWindow(hourly, minWindowHours, config.windowTolerance);
-  // 남은 낮 시간 자체가 짧으면 "비추천"이 아니라 "늦었어요" — 날씨가 나빠서가 아니다
   if (hourly.length < minWindowHours) {
-    return { ...base, verdict: null, score: null, window: null, reason: 'too-late' };
+    // 오늘 남은 낮 시간 자체가 짧으면 "비추천"이 아니라 "늦었어요" — 날씨가 나빠서가 아니다.
+    // 미래 날짜인데 낮 예보가 모자라면(예보 기간 끝자락) 늦은 게 아니라 예보가 없는 것
+    const reason = date === now.date ? 'too-late' : 'no-data';
+    return { ...base, verdict: null, score: null, window: null, reason };
   }
   // 시간은 있는데 비 때문에 연속 구간이 없으면 비추천
   if (!w) return { ...base, verdict: 'bad', score: 0, window: null };
@@ -182,6 +189,12 @@ function judgeCarWash(hours: HourlyForecast[], date: string, now: JudgeNow, conf
   );
   const drying = judgeDrying('laundry', hours, date, now, config);
   const result: Judgement = { ...drying, activity: 'carWash' };
+  // 예보가 확인 기간 끝(lastDate 23시)까지 오는지. 안 오면 비 소식이 없다고 단정하지 않는다
+  const last = hours.reduce<HourlyForecast | null>(
+    (acc, h) => (!acc || h.date > acc.date || (h.date === acc.date && h.hour > acc.hour) ? h : acc),
+    null,
+  );
+  const covered = !!last && (last.date > lastDate || (last.date === lastDate && last.hour >= 23));
   if (rainy) {
     return {
       ...result,
@@ -192,6 +205,7 @@ function judgeCarWash(hours: HourlyForecast[], date: string, now: JudgeNow, conf
       rainAt: { date: rainy.date, hour: rainy.hour },
     };
   }
+  if (!covered && last) return { ...result, checkedUntil: { date: last.date, hour: last.hour } };
   return result;
 }
 

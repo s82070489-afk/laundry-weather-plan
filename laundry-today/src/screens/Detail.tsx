@@ -75,14 +75,27 @@ export default function Detail({ activity, date, forecast }: DetailProps) {
 
 function statusText(j: Judgement, today: string): string {
   if (j.reason === 'no-data') return '아직 이 날짜의 예보가 없어요';
-  if (j.reason === 'too-late') return '오늘은 빨래하기엔 늦었어요. 남은 낮 시간이 부족해요';
+  if (j.reason === 'too-late') return `오늘은 ${TOO_LATE_ACTIVITY[j.activity]} 늦었어요. 남은 낮 시간이 부족해요`;
   if (j.reason === 'rain-soon' && j.rainAt) {
     return `${relativeDayLabel(j.rainAt.date, today, addDays)} ${periodOf(j.rainAt.hour)}에 비 소식이 있어요. 세차는 미뤄두세요`;
   }
   const window = formatWindow(j.window);
-  if (j.activity === 'carWash') return j.verdict === 'bad' ? '세차하기 좋은 날씨가 아니에요' : '당분간 비 소식이 없어요';
+  if (j.activity === 'carWash') {
+    if (j.verdict === 'bad') return '세차하기 좋은 날씨가 아니에요';
+    // 예보가 확인 기간 끝까지 안 왔으면 확인한 데까지만 말한다
+    if (j.checkedUntil) {
+      return `${relativeDayLabel(j.checkedUntil.date, today, addDays)} ${periodOf(j.checkedUntil.hour)}까지 비 소식이 없어요. 그 뒤 예보는 아직 없어요`;
+    }
+    return '당분간 비 소식이 없어요';
+  }
   return window ? `${window}에 널면 가장 잘 말라요` : '널어 말리기 좋은 시간이 없어요';
 }
+
+const TOO_LATE_ACTIVITY: Record<Activity, string> = {
+  laundry: '빨래하기엔',
+  blanket: '이불 널기엔',
+  carWash: '세차하기엔',
+};
 
 const SKY_LABEL: Record<number, string> = { 1: '맑음', 3: '구름많음', 4: '흐림' };
 const PTY_LABEL: Record<number, string> = { 1: '비', 2: '비/눈', 3: '눈', 4: '소나기' };

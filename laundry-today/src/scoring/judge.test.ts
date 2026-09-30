@@ -137,6 +137,12 @@ describe('빨래 판정', () => {
     expect(headline(j, false)).toBe('오늘은 실내에서 말리는 게 좋아요');
   });
 
+  it('미래 날짜인데 낮 예보가 모자라면 늦었어요가 아니라 no-data', () => {
+    const j = judge('laundry', flatDay(TOMORROW).slice(0, 9), TOMORROW, { date: TODAY, hour: 10 });
+    expect(j.verdict).toBeNull();
+    expect(j.reason).toBe('no-data');
+  });
+
   it('해당 날짜 예보가 없으면 no-data', () => {
     const j = judge('laundry', flatDay(TODAY), TOMORROW, { date: TODAY, hour: 10 });
     expect(j.verdict).toBeNull();
@@ -184,6 +190,16 @@ describe('이불 판정', () => {
 
 describe('세차 판정', () => {
   const now = { date: TODAY, hour: 9 };
+
+  it('예보가 확인 기간 끝까지 없으면 확인한 마지막 시각을 남긴다', () => {
+    // 14시 발표처럼 글피 08시까지만 있는 예보
+    const partial = [...flatDay(TOMORROW), ...flatDay('20260928'), ...flatDay('20260929').slice(0, 9)];
+    const j = judge('carWash', partial, TOMORROW, { date: TODAY, hour: 15 });
+    expect(j.verdict).toBe('good');
+    expect(j.checkedUntil).toEqual({ date: '20260929', hour: 8 });
+    const full = [...flatDay(TOMORROW), ...flatDay('20260928'), ...flatDay('20260929')];
+    expect(judge('carWash', full, TOMORROW, { date: TODAY, hour: 15 }).checkedUntil).toBeUndefined();
+  });
 
   it('판정일~2일 뒤 사이 PTY ≠ 0 이면 비추천', () => {
     const hours = [...flatDay(TODAY), ...flatDay(TOMORROW), ...flatDay('20260928')];
